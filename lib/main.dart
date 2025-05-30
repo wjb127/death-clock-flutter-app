@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:share_plus/share_plus.dart';
 import 'dart:math';
 import 'dart:async';
+import 'notification_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService.initialize();
   runApp(const DeathClockApp());
 }
 
@@ -46,6 +51,7 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
   double lifePercentage = 0.0;
   int currentQuoteIndex = 0;
   Timer? _timer;
+  bool notificationsEnabled = false;
   
   // 날짜 선택을 위한 변수들
   late int selectedYear;
@@ -67,6 +73,106 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
     selectedYear = now.year;
     selectedMonth = now.month;
     selectedDay = now.day;
+    _loadNotificationSettings();
+  }
+
+  Future<void> _loadNotificationSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      notificationsEnabled = prefs.getBool('notifications_enabled') ?? false;
+    });
+  }
+
+  Future<void> _toggleNotifications() async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    if (!notificationsEnabled) {
+      await NotificationService.requestPermissions();
+      await NotificationService.scheduleDailyNotification();
+      await prefs.setBool('notifications_enabled', true);
+      setState(() {
+        notificationsEnabled = true;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('매일 오후 8시에 알림이 설정되었습니다! 🔔'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } else {
+      await NotificationService.cancelAllNotifications();
+      await prefs.setBool('notifications_enabled', false);
+      setState(() {
+        notificationsEnabled = false;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('알림이 해제되었습니다'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showSettingsDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: Colors.grey[900],
+              title: const Text(
+                '설정',
+                style: TextStyle(color: Colors.white),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        '매일 알림',
+                        style: TextStyle(color: Colors.white, fontSize: 16),
+                      ),
+                      Switch(
+                        value: notificationsEnabled,
+                        onChanged: (value) async {
+                          await _toggleNotifications();
+                          setDialogState(() {});
+                        },
+                        activeColor: Colors.red[400],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    '매일 오후 8시에 수명 확인 알림을 받습니다',
+                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(
+                    '닫기',
+                    style: TextStyle(color: Colors.red[400]),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -135,6 +241,24 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
     return DateTime(year, month + 1, 0).day;
   }
 
+  void _shareLifeStats() {
+    if (selectedBirthDate == null) return;
+    
+    final ageInYears = DateTime.now().difference(selectedBirthDate!).inDays / 365.25;
+    final shareText = '''
+⏰ Death Clock 수명 체크 결과
+
+📅 생일: ${selectedBirthDate!.year}.${selectedBirthDate!.month.toString().padLeft(2, '0')}.${selectedBirthDate!.day.toString().padLeft(2, '0')}
+⏳ 남은 수명: ${_formatTime(remainingSeconds)}
+📊 인생 진행률: ${lifePercentage.toStringAsFixed(1)}%
+💭 "${motivationalQuotes[currentQuoteIndex]}"
+
+당신의 남은 시간은? Death Clock 앱으로 확인해보세요!
+''';
+    
+    Share.share(shareText);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -150,6 +274,12 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
         ),
         backgroundColor: Colors.red[900],
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings, color: Colors.white),
+            onPressed: _showSettingsDialog,
+          ),
+        ],
       ),
       body: Container(
         width: double.infinity,
@@ -339,13 +469,22 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
                     ),
                     child: Column(
                       children: [
-                        const Text(
-                          '남은 수명',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              '남은 수명',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.share, color: Colors.white),
+                              onPressed: _shareLifeStats,
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 15),
                         Text(
