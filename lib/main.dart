@@ -90,8 +90,8 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
     final age = now.difference(selectedBirthDate!);
     final ageInYears = age.inDays / 365.25;
     
-    // 80년 수명 기준
-    const lifeExpectancy = 80.0;
+    // 100년 수명 기준
+    const lifeExpectancy = 100.0;
     final remainingYears = lifeExpectancy - ageInYears;
     
     if (remainingYears > 0) {
@@ -183,6 +183,15 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
                     color: Colors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  '* 수명은 100살로 가정하여 계산됩니다',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
                   ),
                 ),
                 const SizedBox(height: 20),
