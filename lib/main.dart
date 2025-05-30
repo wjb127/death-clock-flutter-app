@@ -83,43 +83,6 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
     });
   }
 
-  Future<void> _toggleNotifications() async {
-    final prefs = await SharedPreferences.getInstance();
-    
-    if (!notificationsEnabled) {
-      await NotificationService.requestPermissions();
-      await NotificationService.scheduleDailyNotification();
-      await prefs.setBool('notifications_enabled', true);
-      setState(() {
-        notificationsEnabled = true;
-      });
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('매일 오후 8시에 알림이 설정되었습니다! 🔔'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } else {
-      await NotificationService.cancelAllNotifications();
-      await prefs.setBool('notifications_enabled', false);
-      setState(() {
-        notificationsEnabled = false;
-      });
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('알림이 해제되었습니다'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-    }
-  }
-
   void _showSettingsDialog() {
     showDialog(
       context: context,
@@ -145,8 +108,45 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
                       Switch(
                         value: notificationsEnabled,
                         onChanged: (value) async {
-                          await _toggleNotifications();
-                          setDialogState(() {});
+                          // 먼저 다이얼로그 상태 업데이트
+                          setDialogState(() {
+                            notificationsEnabled = value;
+                          });
+                          
+                          // 그 다음 실제 알림 설정 처리
+                          final prefs = await SharedPreferences.getInstance();
+                          
+                          if (value) {
+                            await NotificationService.requestPermissions();
+                            await NotificationService.scheduleDailyNotification();
+                            await prefs.setBool('notifications_enabled', true);
+                            
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('매일 오후 8시에 알림이 설정되었습니다! 🔔'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            }
+                          } else {
+                            await NotificationService.cancelAllNotifications();
+                            await prefs.setBool('notifications_enabled', false);
+                            
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('알림이 해제되었습니다'),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              );
+                            }
+                          }
+                          
+                          // 마지막에 메인 위젯 상태 업데이트
+                          setState(() {
+                            notificationsEnabled = value;
+                          });
                         },
                         activeColor: Colors.red[400],
                       ),
