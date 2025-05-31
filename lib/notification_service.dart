@@ -5,22 +5,26 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'dart:math';
+import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class NotificationService {
   // 알림 플러그인 인스턴스
   static final FlutterLocalNotificationsPlugin _notifications = FlutterLocalNotificationsPlugin();
   
-  // 동기부여 메시지 목록 (8개) - 랜덤으로 선택되어 알림에 표시
-  static final List<String> _motivationalMessages = [
-    "⏰ 남은 수명을 확인하고 정신차리세요!",
-    "💀 시간은 기다려주지 않습니다. 지금 확인하세요!",
-    "⚡ 매 순간이 소중합니다. 남은 시간을 체크하세요!",
-    "🔥 인생은 짧습니다. 오늘도 의미있게 보내세요!",
-    "💎 시간은 가장 귀한 자산입니다. 확인해보세요!",
-    "🚀 목표를 향해 달려가세요. 남은 시간을 확인하세요!",
-    "⭐ 오늘 하루도 소중히! 수명 체크하러 가기",
-    "🎯 시간 관리의 첫걸음, 남은 수명 확인하기",
-  ];
+  // 다국어 지원 동기부여 메시지 목록을 반환하는 함수
+  static List<String> getMotivationalMessages(AppLocalizations l10n) {
+    return [
+      l10n.notificationMessage1,
+      l10n.notificationMessage2,
+      l10n.notificationMessage3,
+      l10n.notificationMessage4,
+      l10n.notificationMessage5,
+      l10n.notificationMessage6,
+      l10n.notificationMessage7,
+      l10n.notificationMessage8,
+    ];
+  }
 
   // === 알림 서비스 초기화 ===
   static Future<void> initialize() async {
@@ -64,10 +68,22 @@ class NotificationService {
         );
   }
 
-  // === 매일 반복 알림 스케줄링 ===
+  // === 매일 반복 알림 스케줄링 (기본 영어 메시지) ===
   static Future<void> scheduleDailyNotification() async {
+    // 기본 영어 메시지 사용 (앱 컨텍스트 없이 호출되는 경우)
+    final messages = [
+      "⏰ Check your remaining life and wake up!",
+      "💀 Time doesn't wait. Check now!",
+      "⚡ Every moment is precious. Check your remaining time!",
+      "🔥 Life is short. Make today meaningful!",
+      "💎 Time is your most precious asset. Check it!",
+      "🚀 Run towards your goals. Check your remaining time!",
+      "⭐ Cherish today too! Check your life timer",
+      "🎯 First step of time management: Check remaining life",
+    ];
+    
     final random = Random();
-    final message = _motivationalMessages[random.nextInt(_motivationalMessages.length)];
+    final message = messages[random.nextInt(messages.length)];
     
     try {
       // 정확한 시간 알림 시도 (매일 아침 8시)
@@ -125,6 +141,68 @@ class NotificationService {
     }
   }
 
+  // === 다국어 지원 매일 반복 알림 스케줄링 ===
+  static Future<void> scheduleDailyNotificationWithLocale(AppLocalizations l10n) async {
+    final messages = getMotivationalMessages(l10n);
+    final random = Random();
+    final message = messages[random.nextInt(messages.length)];
+    
+    try {
+      // 정확한 시간 알림 시도 (매일 아침 8시)
+      await _notifications.zonedSchedule(
+        0, // 알림 ID
+        l10n.appTitle, // 알림 제목
+        message, // 알림 내용
+        _nextInstanceOfTime(8, 0), // 매일 아침 8시
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'daily_reminder', // 채널 ID
+            'Daily Life Reminder', // 채널 이름
+            channelDescription: 'Daily life reminder notifications',
+            importance: Importance.high, // 높은 우선순위
+            priority: Priority.high,
+            icon: '@mipmap/ic_launcher', // 알림 아이콘
+          ),
+          iOS: DarwinNotificationDetails(
+            sound: 'default.wav',
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.time, // 매일 같은 시간 반복
+      );
+    } catch (e) {
+      // 정확한 알람이 허용되지 않는 경우, 대략적인 시간으로 스케줄링
+      print('정확한 알람 권한이 없습니다. 대략적인 시간으로 설정합니다: $e');
+      
+      // 대신 24시간 간격 반복 알림으로 설정 (덜 정확하지만 작동함)
+      await _notifications.periodicallyShow(
+        0,
+        l10n.appTitle,
+        message,
+        RepeatInterval.daily, // 24시간마다 반복
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'daily_reminder',
+            'Daily Life Reminder',
+            channelDescription: 'Daily life reminder notifications',
+            importance: Importance.high,
+            priority: Priority.high,
+            icon: '@mipmap/ic_launcher',
+          ),
+          iOS: DarwinNotificationDetails(
+            sound: 'default.wav',
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+      );
+    }
+  }
+
   // === 다음 알림 시간 계산 (특정 시간) ===
   static tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
@@ -140,18 +218,53 @@ class NotificationService {
 
   // === 즉시 테스트 알림 전송 (개발용) ===
   static Future<void> sendTestNotification() async {
+    // 기본 영어 메시지 사용
+    final messages = [
+      "⏰ Check your remaining life and wake up!",
+      "💀 Time doesn't wait. Check now!",
+      "⚡ Every moment is precious. Check your remaining time!",
+    ];
     final random = Random();
-    final message = _motivationalMessages[random.nextInt(_motivationalMessages.length)];
+    final message = messages[random.nextInt(messages.length)];
     
     await _notifications.show(
       999, // 테스트용 고유 ID
-      'Death Clock ⏰ (테스트)', // 테스트임을 명시
-      '$message\n\n✅ 알림이 정상 작동합니다!',
+      'Death Clock ⏰ (Test)', // 테스트임을 명시
+      '$message\n\n✅ Notifications are working properly!',
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'test_notification', // 테스트용 별도 채널
           'Test Notification',
-          channelDescription: '알림 테스트용',
+          channelDescription: 'For testing notifications',
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+        ),
+        iOS: DarwinNotificationDetails(
+          sound: 'default.wav',
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+    );
+  }
+
+  // === 다국어 지원 즉시 테스트 알림 전송 ===
+  static Future<void> sendTestNotificationWithLocale(AppLocalizations l10n) async {
+    final messages = getMotivationalMessages(l10n);
+    final random = Random();
+    final message = messages[random.nextInt(messages.length)];
+    
+    await _notifications.show(
+      999, // 테스트용 고유 ID
+      '${l10n.appTitle} (Test)', // 테스트임을 명시
+      '$message\n\n✅ ${l10n.notificationEnabled}',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'test_notification', // 테스트용 별도 채널
+          'Test Notification',
+          channelDescription: 'For testing notifications',
           importance: Importance.high,
           priority: Priority.high,
           icon: '@mipmap/ic_launcher',

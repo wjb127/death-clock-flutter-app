@@ -1,0 +1,127 @@
+{
+  "@@locale": "en",
+  "appTitle": "⏰ Death Clock",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+  "appSubtitle": "Life Timer",
+  "@appSubtitle": {
+    "description": "The subtitle of the application"
+  },
+  "settings": "Settings",
+  "@settings": {
+    "description": "Settings menu title"
+  },
+  "selectBirthday": "Select your birthday",
+  "@selectBirthday": {
+    "description": "Instruction to select birthday"
+  },
+  "remainingLife": "Remaining Life",
+  "@remainingLife": {
+    "description": "Label for remaining life time"
+  },
+  "lifeProgress": "Life Progress",
+  "@lifeProgress": {
+    "description": "Label for life progress percentage"
+  },
+  "years": "years",
+  "@years": {
+    "description": "Time unit: years"
+  },
+  "days": "days",
+  "@days": {
+    "description": "Time unit: days"
+  },
+  "hours": "hours",
+  "@hours": {
+    "description": "Time unit: hours"
+  },
+  "minutes": "minutes",
+  "@minutes": {
+    "description": "Time unit: minutes"
+  },
+  "seconds": "seconds",
+  "@seconds": {
+    "description": "Time unit: seconds"
+  },
+  "dailyNotifications": "Daily Notifications",
+  "@dailyNotifications": {
+    "description": "Daily notifications setting"
+  },
+  "notificationEnabled": "Daily notification set for 8 AM! 🔔",
+  "@notificationEnabled": {
+    "description": "Message when notifications are enabled"
+  },
+  "notificationDisabled": "Notifications disabled.",
+  "@notificationDisabled": {
+    "description": "Message when notifications are disabled"
+  },
+  "shareLifeStats": "Share Life Stats",
+  "@shareLifeStats": {
+    "description": "Button to share life statistics"
+  },
+  "viewOtherQuote": "View Other Quote",
+  "@viewOtherQuote": {
+    "description": "Button to view another motivational quote"
+  },
+  "birthday": "Birthday",
+  "@birthday": {
+    "description": "Label for birthday"
+  },
+  "shareMessage": "⏰ Death Clock Life Check Result\n\n📅 Birthday: {birthday}\n⏳ Remaining Life: {remainingTime}\n📊 Life Progress: {progress}%\n💭 \"{quote}\"\n\nWhat's your remaining time? Check with Death Clock app!",
+  "@shareMessage": {
+    "description": "Message template for sharing"
+  },
+  "quote1": "Time is life. Don't waste it.",
+  "@quote1": {
+    "description": "Motivational quote 1"
+  },
+  "quote2": "Every moment is precious. Live this moment.",
+  "@quote2": {
+    "description": "Motivational quote 2"
+  },
+  "quote3": "Those who save time gain life.",
+  "@quote3": {
+    "description": "Motivational quote 3"
+  },
+  "quote4": "Don't put off until tomorrow what you can do today.",
+  "@quote4": {
+    "description": "Motivational quote 4"
+  },
+  "quote5": "Time doesn't come back. Focus on the present.",
+  "@quote5": {
+    "description": "Motivational quote 5"
+  },
+  "notificationMessage1": "⏰ Check your remaining life and wake up!",
+  "@notificationMessage1": {
+    "description": "Notification message 1"
+  },
+  "notificationMessage2": "💀 Time doesn't wait. Check now!",
+  "@notificationMessage2": {
+    "description": "Notification message 2"
+  },
+  "notificationMessage3": "⚡ Every moment is precious. Check your remaining time!",
+  "@notificationMessage3": {
+    "description": "Notification message 3"
+  },
+  "notificationMessage4": "🔥 Life is short. Make today meaningful!",
+  "@notificationMessage4": {
+    "description": "Notification message 4"
+  },
+  "notificationMessage5": "💎 Time is your most precious asset. Check it!",
+  "@notificationMessage5": {
+    "description": "Notification message 5"
+  },
+  "notificationMessage6": "🚀 Run towards your goals. Check your remaining time!",
+  "@notificationMessage6": {
+    "description": "Notification message 6"
+  },
+  "notificationMessage7": "⭐ Cherish today too! Check your life timer",
+  "@notificationMessage7": {
+    "description": "Notification message 7"
+  },
+  "notificationMessage8": "🎯 First step of time management: Check remaining life",
+  "@notificationMessage8": {
+    "description": "Notification message 8"
+  }
+} 

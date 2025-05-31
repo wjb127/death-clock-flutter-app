@@ -12,6 +12,7 @@ import 'dart:math';
 import 'dart:async';
 import 'notification_service.dart';
 import 'ad_helper.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 // 앱 진입점 - 알림 서비스 및 애드몹 초기화 후 앱 실행
 void main() async {
@@ -33,13 +34,14 @@ class DeathClockApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Death Clock - 수명 계산기',
+      title: 'Death Clock - Life Timer',
       theme: ThemeData(
         primarySwatch: Colors.red, // 빨간색 테마
         fontFamily: 'Roboto',
       ),
-      // 한국어 지원을 위한 로케일 설정
+      // 다국어 지원을 위한 로케일 설정
       localizationsDelegates: const [
+        AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
@@ -47,6 +49,8 @@ class DeathClockApp extends StatelessWidget {
       supportedLocales: const [
         Locale('ko', 'KR'), // 한국어
         Locale('en', 'US'), // 영어
+        Locale('ja', 'JP'), // 일본어
+        Locale('de', 'DE'), // 독일어
       ],
       home: const DeathClockHomePage(),
     );
@@ -83,15 +87,17 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
   late int selectedYear; // 선택된 년도
   late int selectedMonth; // 선택된 월
   late int selectedDay; // 선택된 일
-  
-  // 동기부여 명언 목록 (5개)
-  final List<String> motivationalQuotes = [
-    "시간은 생명이다. 낭비하지 마라.",
-    "매 순간이 소중하다. 지금 이 순간을 살아라.",
-    "시간을 아끼는 자가 인생을 얻는다.",
-    "오늘 할 수 있는 일을 내일로 미루지 마라.",
-    "시간은 돌아오지 않는다. 현재에 집중하라."
-  ];
+
+  // 다국어 지원 명언 목록을 반환하는 함수
+  List<String> getMotivationalQuotes(AppLocalizations l10n) {
+    return [
+      l10n.quote1,
+      l10n.quote2,
+      l10n.quote3,
+      l10n.quote4,
+      l10n.quote5,
+    ];
+  }
 
   @override
   void initState() {
@@ -114,136 +120,133 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
     });
   }
 
-  // === 앱 시작 시 알림 권한 요청 ===
+  // === 알림 권한 확인 및 요청 ===
   Future<void> _checkAndRequestNotificationPermission() async {
-    final prefs = await SharedPreferences.getInstance();
-    final hasAskedBefore = prefs.getBool('notification_permission_asked') ?? false;
-    
-    // 이전에 물어본 적이 없다면 권한 요청
-    if (!hasAskedBefore) {
-      // 잠시 후에 다이얼로그 표시 (UI가 완전히 로드된 후)
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _showNotificationPermissionDialog();
-      });
-    }
+    await NotificationService.requestPermissions();
   }
 
-  // === 알림 권한 요청 다이얼로그 ===
-  void _showNotificationPermissionDialog() {
+  // === 생일 선택 다이얼로그 표시 ===
+  void _showBirthDatePicker() {
     showDialog(
       context: context,
-      barrierDismissible: false, // 뒤로가기로 닫을 수 없음
       builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.grey[900],
-          title: Row(
-            children: [
-              Icon(Icons.notifications_active, color: Colors.red[400], size: 28),
-              const SizedBox(width: 10),
-              const Text(
-                '알림 설정',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        final l10n = AppLocalizations.of(context)!;
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: Colors.grey[900],
+              title: Text(
+                l10n.selectBirthday,
+                style: const TextStyle(color: Colors.white),
               ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '매일 아침 8시에 수명 확인 알림을 받으시겠습니까?',
-                style: TextStyle(color: Colors.white, fontSize: 16),
-              ),
-              const SizedBox(height: 15),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.red[900]?.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red[300]!, width: 1),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              content: SizedBox(
+                height: 200,
+                child: Row(
                   children: [
-                    Text(
-                      '💡 알림의 효과:',
-                      style: TextStyle(color: Colors.red[300], fontWeight: FontWeight.bold),
+                    // 년도 선택
+                    Expanded(
+                      child: CupertinoPicker(
+                        itemExtent: 40,
+                        onSelectedItemChanged: (index) {
+                          setDialogState(() {
+                            selectedYear = 1900 + index;
+                          });
+                        },
+                        children: List.generate(125, (index) {
+                          final year = 1900 + index;
+                          return Center(
+                            child: Text(
+                              '$year',
+                              style: const TextStyle(color: Colors.white, fontSize: 18),
+                            ),
+                          );
+                        }),
+                        scrollController: FixedExtentScrollController(
+                          initialItem: selectedYear - 1900,
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 5),
-                    const Text(
-                      '• 매일 남은 시간을 인식하게 됩니다\n• 시간 관리 의식이 향상됩니다\n• 목표 달성 동기부여를 받습니다',
-                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    // 월 선택
+                    Expanded(
+                      child: CupertinoPicker(
+                        itemExtent: 40,
+                        onSelectedItemChanged: (index) {
+                          setDialogState(() {
+                            selectedMonth = index + 1;
+                            // 선택된 월에 따라 일 조정
+                            final maxDays = _getDaysInMonth(selectedYear, selectedMonth);
+                            if (selectedDay > maxDays) {
+                              selectedDay = maxDays;
+                            }
+                          });
+                        },
+                        children: List.generate(12, (index) {
+                          final month = index + 1;
+                          return Center(
+                            child: Text(
+                              '$month',
+                              style: const TextStyle(color: Colors.white, fontSize: 18),
+                            ),
+                          );
+                        }),
+                        scrollController: FixedExtentScrollController(
+                          initialItem: selectedMonth - 1,
+                        ),
+                      ),
+                    ),
+                    // 일 선택
+                    Expanded(
+                      child: CupertinoPicker(
+                        itemExtent: 40,
+                        onSelectedItemChanged: (index) {
+                          setDialogState(() {
+                            selectedDay = index + 1;
+                          });
+                        },
+                        children: List.generate(_getDaysInMonth(selectedYear, selectedMonth), (index) {
+                          final day = index + 1;
+                          return Center(
+                            child: Text(
+                              '$day',
+                              style: const TextStyle(color: Colors.white, fontSize: 18),
+                            ),
+                          );
+                        }),
+                        scrollController: FixedExtentScrollController(
+                          initialItem: selectedDay - 1,
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                // 거부 선택
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool('notification_permission_asked', true);
-                await prefs.setBool('notifications_enabled', false);
-                
-                setState(() {
-                  notificationsEnabled = false;
-                });
-                
-                Navigator.of(context).pop();
-                
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('알림을 거부했습니다. 설정에서 언제든 변경할 수 있습니다.'),
-                    backgroundColor: Colors.orange,
-                  ),
-                );
-              },
-              child: Text(
-                '나중에',
-                style: TextStyle(color: Colors.grey[400]),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                // 허용 선택
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool('notification_permission_asked', true);
-                
-                // 알림 권한 요청 및 스케줄링
-                await NotificationService.requestPermissions();
-                await NotificationService.scheduleDailyNotification();
-                await prefs.setBool('notifications_enabled', true);
-                
-                setState(() {
-                  notificationsEnabled = true;
-                });
-                
-                Navigator.of(context).pop();
-                
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('🔔 매일 아침 8시에 알림이 설정되었습니다!'),
-                    backgroundColor: Colors.green,
-                    duration: Duration(seconds: 3),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red[700],
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('알림 받기'),
-            ),
-          ],
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('취소', style: TextStyle(color: Colors.grey)),
+                ),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      selectedBirthDate = DateTime(selectedYear, selectedMonth, selectedDay);
+                      _calculateRemainingLife();
+                      _startTimer();
+                    });
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('확인', style: TextStyle(color: Colors.red)),
+                ),
+              ],
+            );
+          },
         );
       },
     );
   }
 
-  // === 설정 다이얼로그 표시 메서드 ===
+  // === 설정 다이얼로그 표시 ===
   void _showSettingsDialog() {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -251,9 +254,9 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: Colors.grey[900], // 다크 테마
-              title: const Text(
-                '설정',
-                style: TextStyle(color: Colors.white),
+              title: Text(
+                l10n.settings,
+                style: const TextStyle(color: Colors.white),
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -261,9 +264,9 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        '매일 알림',
-                        style: TextStyle(color: Colors.white, fontSize: 16),
+                      Text(
+                        l10n.dailyNotifications,
+                        style: const TextStyle(color: Colors.white, fontSize: 16),
                       ),
                       Switch(
                         value: notificationsEnabled,
@@ -284,8 +287,8 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
                             
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('매일 아침 8시에 알림이 설정되었습니다! 🔔'),
+                                SnackBar(
+                                  content: Text(l10n.notificationEnabled),
                                   backgroundColor: Colors.green,
                                 ),
                               );
@@ -297,102 +300,29 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
                             
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('알림이 해제되었습니다'),
+                                SnackBar(
+                                  content: Text(l10n.notificationDisabled),
                                   backgroundColor: Colors.orange,
                                 ),
                               );
                             }
                           }
                           
-                          // 마지막에 메인 위젯 상태 업데이트
+                          // 메인 화면 상태도 업데이트
                           setState(() {
-                            notificationsEnabled = value;
+                            this.notificationsEnabled = value;
                           });
                         },
-                        activeColor: Colors.red[400], // 스위치 활성화 색상
+                        activeColor: Colors.red,
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    '매일 아침 8시에 수명 확인 알림을 받습니다',
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
-                  ),
-                  // 개발용 권한 초기화 기능 (필요시 주석 해제)
-                  /*
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final prefs = await SharedPreferences.getInstance();
-                        await prefs.remove('notification_permission_asked');
-                        await prefs.remove('notifications_enabled');
-                        
-                        setState(() {
-                          notificationsEnabled = false;
-                        });
-                        
-                        Navigator.of(context).pop();
-                        
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('권한 요청이 초기화되었습니다. 앱을 재시작하면 다시 물어봅니다.'),
-                            backgroundColor: Colors.blue,
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey[700],
-                        foregroundColor: Colors.white,
-                      ),
-                      child: const Text('권한 요청 초기화 (개발용)'),
-                    ),
-                  ),
-                  */
-                  // 알림 테스트 기능 (개발용 - 필요시 주석 해제)
-                  /*
-                  const SizedBox(height: 20),
-                  // 테스트 알림 버튼
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        await NotificationService.requestPermissions();
-                        await NotificationService.sendTestNotification();
-                        
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('🔔 테스트 알림을 보냈습니다! 알림창을 확인해보세요.'),
-                              backgroundColor: Colors.blue,
-                              duration: Duration(seconds: 3),
-                            ),
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.notifications_active, color: Colors.white),
-                      label: const Text(
-                        '알림 테스트',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue[700],
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
-                  */
                 ],
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: Text(
-                    '닫기',
-                    style: TextStyle(color: Colors.red[400]),
-                  ),
+                  child: const Text('닫기', style: TextStyle(color: Colors.red)),
                 ),
               ],
             );
@@ -402,67 +332,88 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
     );
   }
 
-  // === 리소스 정리 메서드 ===
-  @override
-  void dispose() {
-    _timer?.cancel(); // 타이머 정리
-    _interstitialAd?.dispose(); // 전면광고 정리
-    _bannerAd?.dispose(); // 배너광고 정리
-    super.dispose();
-  }
-
-  // === 날짜 변경 처리 메서드 ===
-  void _onDateChanged() {
-    setState(() {
-      selectedBirthDate = DateTime(selectedYear, selectedMonth, selectedDay);
-      _calculateRemainingLife(); // 수명 재계산
-      _startTimer(); // 타이머 재시작
-    });
-  }
-
-  // === 남은 수명 계산 메서드 ===
+  // === 남은 수명 계산 ===
   void _calculateRemainingLife() {
     if (selectedBirthDate == null) return;
 
     final now = DateTime.now();
-    final age = now.difference(selectedBirthDate!); // 현재 나이 계산
-    final ageInYears = age.inDays / 365.25; // 년 단위로 변환 (윤년 고려)
+    final age = now.difference(selectedBirthDate!);
+    final ageInYears = age.inDays / 365.25;
     
-    // 100년 수명 기준으로 계산
-    const lifeExpectancy = 100.0;
-    final remainingYears = lifeExpectancy - ageInYears;
+    // 100세까지 남은 시간 계산
+    final remainingYears = 100 - ageInYears;
+    final remainingDays = remainingYears * 365.25;
+    remainingSeconds = (remainingDays * 24 * 60 * 60).round();
     
-    if (remainingYears > 0) {
-      // 남은 년수를 초 단위로 변환
-      remainingSeconds = (remainingYears * 365.25 * 24 * 60 * 60).round();
-      lifePercentage = (ageInYears / lifeExpectancy) * 100; // 진행률 계산
-    } else {
-      // 100세 초과한 경우
-      remainingSeconds = 0;
-      lifePercentage = 100.0;
-    }
-
-    // 명언 인덱스 랜덤 변경
-    currentQuoteIndex = Random().nextInt(motivationalQuotes.length);
+    // 인생 진행률 계산 (0-100%)
+    lifePercentage = (ageInYears / 100) * 100;
+    if (lifePercentage > 100) lifePercentage = 100;
+    if (lifePercentage < 0) lifePercentage = 0;
   }
 
-  // === 실시간 카운트다운 타이머 시작 ===
+  // === 실시간 타이머 시작 ===
   void _startTimer() {
-    _timer?.cancel(); // 기존 타이머가 있다면 취소
+    _timer?.cancel(); // 기존 타이머 정리
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (remainingSeconds > 0) {
         setState(() {
-          remainingSeconds--; // 매초마다 1초씩 감소
+          remainingSeconds--;
         });
       } else {
-        timer.cancel(); // 0에 도달하면 타이머 중지
+        timer.cancel();
       }
     });
   }
 
-  // === 시간 포맷팅 메서드 (초 → 년/일/시/분/초) ===
-  String _formatTime(int seconds) {
-    if (seconds <= 0) return "0초";
+  // === 전면광고 로드 ===
+  void _loadInterstitialAd() {
+    InterstitialAd.load(
+      adUnitId: AdHelper.interstitialAdUnitId,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          print('전면광고 로드 완료');
+          _interstitialAd = ad;
+          _isInterstitialAdReady = true;
+          
+          ad.setImmersiveMode(true);
+        },
+        onAdFailedToLoad: (err) {
+          print('전면광고 로드 실패: ${err.message}');
+          _isInterstitialAdReady = false;
+          // 30초 후 재시도
+          Timer(const Duration(seconds: 30), () {
+            _loadInterstitialAd();
+          });
+        },
+      ),
+    );
+  }
+
+  // === 전면광고 표시 ===
+  void _showInterstitialAd() {
+    if (_isInterstitialAdReady && _interstitialAd != null) {
+      _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (ad) {
+          print('전면광고 닫힘');
+          ad.dispose();
+          _loadInterstitialAd(); // 다음 광고 미리 로드
+        },
+        onAdFailedToShowFullScreenContent: (ad, err) {
+          print('전면광고 표시 실패: ${err.message}');
+          ad.dispose();
+          _loadInterstitialAd();
+        },
+      );
+      
+      _interstitialAd!.show();
+      _isInterstitialAdReady = false;
+    }
+  }
+
+  // === 시간 포맷팅 (년, 일, 시간, 분, 초로 변환) ===
+  String _formatTime(int seconds, AppLocalizations l10n) {
+    if (seconds <= 0) return "0${l10n.seconds}";
     
     final years = seconds ~/ (365.25 * 24 * 60 * 60); // 년 계산
     final days = (seconds % (365.25 * 24 * 60 * 60)) ~/ (24 * 60 * 60); // 일 계산
@@ -470,7 +421,7 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
     final minutes = (seconds % (60 * 60)) ~/ 60; // 분 계산
     final remainingSecs = seconds % 60; // 초 계산
 
-    return "${years}년 ${days}일 ${hours}시간 ${minutes}분 ${remainingSecs}초";
+    return "${years}${l10n.years} ${days}${l10n.days} ${hours}${l10n.hours} ${minutes}${l10n.minutes} ${remainingSecs}${l10n.seconds}";
   }
 
   // === 해당 월의 최대 일수 계산 (윤년 고려) ===
@@ -482,73 +433,29 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
   void _shareLifeStats() {
     if (selectedBirthDate == null) return;
     
-    // 공유할 텍스트 생성
-    final shareText = '''
-⏰ Death Clock 수명 체크 결과
+    final l10n = AppLocalizations.of(context)!;
+    final motivationalQuotes = getMotivationalQuotes(l10n);
+    
+    // 공유할 텍스트 직접 구성
+    final birthday = '${selectedBirthDate!.year}.${selectedBirthDate!.month.toString().padLeft(2, '0')}.${selectedBirthDate!.day.toString().padLeft(2, '0')}';
+    final remainingTime = _formatTime(remainingSeconds, l10n);
+    final progress = lifePercentage.toStringAsFixed(1);
+    final quote = motivationalQuotes[currentQuoteIndex];
+    
+    final shareText = '''${l10n.appTitle} Life Check Result
 
-📅 생일: ${selectedBirthDate!.year}.${selectedBirthDate!.month.toString().padLeft(2, '0')}.${selectedBirthDate!.day.toString().padLeft(2, '0')}
-⏳ 남은 수명: ${_formatTime(remainingSeconds)}
-📊 인생 진행률: ${lifePercentage.toStringAsFixed(1)}%
-💭 "${motivationalQuotes[currentQuoteIndex]}"
+📅 ${l10n.birthday}: $birthday
+⏳ ${l10n.remainingLife}: $remainingTime
+📊 ${l10n.lifeProgress}: $progress%
+💭 "$quote"
 
-당신의 남은 시간은? Death Clock 앱으로 확인해보세요!
-''';
+What's your remaining time? Check with Death Clock app!''';
     
     // 바로 공유 실행
     Share.share(shareText);
   }
 
-  // === 전면광고 로드 메서드 ===
-  void _loadInterstitialAd() {
-    InterstitialAd.load(
-      adUnitId: AdHelper.interstitialAdUnitId,
-      request: const AdRequest(),
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (InterstitialAd ad) {
-          print('전면광고 로드 완료');
-          _interstitialAd = ad;
-          _isInterstitialAdReady = true;
-          
-          // 앱 시작 직후 1번만 표시 (3초 후)
-          Timer(const Duration(seconds: 3), () {
-            _showInterstitialAd();
-          });
-          
-          // 광고 이벤트 리스너 설정
-          _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
-            onAdShowedFullScreenContent: (InterstitialAd ad) =>
-                print('전면광고 표시됨'),
-            onAdDismissedFullScreenContent: (InterstitialAd ad) {
-              print('전면광고 닫힘');
-              ad.dispose();
-              _isInterstitialAdReady = false;
-              // 앱 시작 후에는 더 이상 로드하지 않음
-            },
-            onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
-              print('전면광고 표시 실패: $error');
-              ad.dispose();
-              _isInterstitialAdReady = false;
-            },
-          );
-        },
-        onAdFailedToLoad: (LoadAdError error) {
-          print('전면광고 로드 실패: $error');
-          _isInterstitialAdReady = false;
-        },
-      ),
-    );
-  }
-
-  // === 전면광고 표시 메서드 ===
-  void _showInterstitialAd() {
-    if (_isInterstitialAdReady && _interstitialAd != null) {
-      _interstitialAd!.show();
-      _interstitialAd = null;
-      _isInterstitialAdReady = false;
-    }
-  }
-
-  // === 배너광고 로드 메서드 ===
+  // === 배너광고 로드 ===
   void _loadBannerAd() {
     _bannerAd = BannerAd(
       adUnitId: AdHelper.bannerAdUnitId,
@@ -577,12 +484,15 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final motivationalQuotes = getMotivationalQuotes(l10n);
+    
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text(
-          '⏰ Death Clock',
-          style: TextStyle(
+        title: Text(
+          l10n.appTitle,
+          style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
             fontSize: 24,
@@ -604,175 +514,135 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
               child: AdWidget(ad: _bannerAd!),
             )
           : null,
-      body: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.red[900]!,
-              Colors.black,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              children: [
-                const SizedBox(height: 20),
-                const Icon(
-                  Icons.access_time,
-                  size: 80,
-                  color: Colors.white,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              // === 생일 선택 버튼 ===
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.red[900]?.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(color: Colors.red[300]!, width: 2),
                 ),
-                const SizedBox(height: 30),
-                
-                // 생일 선택 섹션
-                const Text(
-                  '생일을 선택하세요',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Column(
+                  children: [
+                    const Icon(
+                      Icons.cake,
+                      color: Colors.red,
+                      size: 40,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      selectedBirthDate == null
+                          ? l10n.selectBirthday
+                          : '${selectedBirthDate!.year}.${selectedBirthDate!.month.toString().padLeft(2, '0')}.${selectedBirthDate!.day.toString().padLeft(2, '0')}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    ElevatedButton(
+                      onPressed: _showBirthDatePicker,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red[700],
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      ),
+                      child: Text(selectedBirthDate == null ? l10n.selectBirthday : '변경'),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  '* 수명은 100살로 가정하여 계산됩니다',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                
-                // 날짜 선택 피커들
+              ),
+              
+              const SizedBox(height: 30),
+              
+              // === 남은 수명 표시 (생일이 선택된 경우에만) ===
+              if (selectedBirthDate != null) ...[
+                // 남은 수명 카운터
                 Container(
-                  height: 150,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(25),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(color: Colors.white.withOpacity(0.3)),
+                    gradient: LinearGradient(
+                      colors: [Colors.red[900]!, Colors.red[700]!],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.red.withOpacity(0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
                   ),
-                  child: Row(
+                  child: Column(
                     children: [
-                      // 년도 선택
-                      Expanded(
-                        child: Column(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Text(
-                                '년',
-                                style: TextStyle(color: Colors.white, fontSize: 16),
-                              ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.timer,
+                            color: Colors.white,
+                            size: 30,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            l10n.remainingLife,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
                             ),
-                            Expanded(
-                              child: CupertinoPicker(
-                                itemExtent: 32,
-                                scrollController: FixedExtentScrollController(
-                                  initialItem: DateTime.now().year - 1924,
-                                ),
-                                onSelectedItemChanged: (index) {
-                                  selectedYear = 1924 + index;
-                                  // 선택된 월의 일수를 초과하지 않도록 조정
-                                  final maxDay = _getDaysInMonth(selectedYear, selectedMonth);
-                                  if (selectedDay > maxDay) {
-                                    selectedDay = maxDay;
-                                  }
-                                  _onDateChanged();
-                                },
-                                children: List.generate(101, (index) {
-                                  return Center(
-                                    child: Text(
-                                      '${1924 + index}',
-                                      style: const TextStyle(color: Colors.white),
-                                    ),
-                                  );
-                                }),
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      
-                      // 월 선택
-                      Expanded(
-                        child: Column(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Text(
-                                '월',
-                                style: TextStyle(color: Colors.white, fontSize: 16),
-                              ),
-                            ),
-                            Expanded(
-                              child: CupertinoPicker(
-                                itemExtent: 32,
-                                scrollController: FixedExtentScrollController(
-                                  initialItem: DateTime.now().month - 1,
-                                ),
-                                onSelectedItemChanged: (index) {
-                                  selectedMonth = index + 1;
-                                  // 선택된 월의 일수를 초과하지 않도록 조정
-                                  final maxDay = _getDaysInMonth(selectedYear, selectedMonth);
-                                  if (selectedDay > maxDay) {
-                                    selectedDay = maxDay;
-                                  }
-                                  _onDateChanged();
-                                },
-                                children: List.generate(12, (index) {
-                                  return Center(
-                                    child: Text(
-                                      '${index + 1}',
-                                      style: const TextStyle(color: Colors.white),
-                                    ),
-                                  );
-                                }),
-                              ),
-                            ),
-                          ],
+                      const SizedBox(height: 15),
+                      Text(
+                        _formatTime(remainingSeconds, l10n),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
                         ),
+                        textAlign: TextAlign.center,
                       ),
-                      
-                      // 일 선택
-                      Expanded(
-                        child: Column(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Text(
-                                '일',
-                                style: TextStyle(color: Colors.white, fontSize: 16),
+                      const SizedBox(height: 20),
+                      // 인생 진행률 바
+                      Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                l10n.lifeProgress,
+                                style: const TextStyle(color: Colors.white70, fontSize: 14),
                               ),
-                            ),
-                            Expanded(
-                              child: CupertinoPicker(
-                                itemExtent: 32,
-                                scrollController: FixedExtentScrollController(
-                                  initialItem: DateTime.now().day - 1,
-                                ),
-                                onSelectedItemChanged: (index) {
-                                  selectedDay = index + 1;
-                                  _onDateChanged();
-                                },
-                                children: List.generate(_getDaysInMonth(selectedYear, selectedMonth), (index) {
-                                  return Center(
-                                    child: Text(
-                                      '${index + 1}',
-                                      style: const TextStyle(color: Colors.white),
-                                    ),
-                                  );
-                                }),
+                              Text(
+                                '${lifePercentage.toStringAsFixed(1)}%',
+                                style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
                               ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          LinearProgressIndicator(
+                            value: lifePercentage / 100,
+                            backgroundColor: Colors.white30,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              lifePercentage < 50 ? Colors.green : 
+                              lifePercentage < 80 ? Colors.orange : Colors.red,
                             ),
-                          ],
-                        ),
+                            minHeight: 8,
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -780,104 +650,36 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
                 
                 const SizedBox(height: 30),
                 
-                if (selectedBirthDate != null) ...[
-                  // 남은 수명 표시
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.red[800]?.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border.all(color: Colors.red[300]!, width: 2),
+                // 공유 버튼
+                Container(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      _shareLifeStats();
+                      // 공유 시 전면광고 표시 (확률적으로)
+                      if (Random().nextBool()) {
+                        _showInterstitialAd();
+                      }
+                    },
+                    icon: const Icon(Icons.share, color: Colors.white),
+                    label: Text(
+                      l10n.shareLifeStats,
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
                     ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              '남은 수명',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.share, color: Colors.white),
-                              onPressed: _shareLifeStats,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 15),
-                        Text(
-                          _formatTime(remainingSeconds),
-                          style: TextStyle(
-                            color: Colors.red[300],
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          '${remainingSeconds.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}초',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue[700],
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
-                  
-                  const SizedBox(height: 20),
-                  
-                  // 수명 퍼센트 표시
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.orange[800]?.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border.all(color: Colors.orange[300]!, width: 2),
-                    ),
-                    child: Column(
-                      children: [
-                        const Text(
-                          '인생 진행률',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 15),
-                        LinearProgressIndicator(
-                          value: lifePercentage / 100,
-                          backgroundColor: Colors.grey[800],
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            lifePercentage > 75 ? Colors.red : 
-                            lifePercentage > 50 ? Colors.orange : Colors.green
-                          ),
-                          minHeight: 10,
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          '${lifePercentage.toStringAsFixed(1)}%',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 20),
-                  
-                  // 동기부여 명언
+                ),
+                
+                const SizedBox(height: 30),
+                
+                // 동기부여 명언 섹션
+                if (motivationalQuotes.isNotEmpty)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
@@ -896,7 +698,7 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
                         const SizedBox(height: 10),
                         Text(
                           motivationalQuotes[currentQuoteIndex],
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
                             fontStyle: FontStyle.italic,
@@ -915,18 +717,25 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
                             backgroundColor: Colors.blue[700],
                             foregroundColor: Colors.white,
                           ),
-                          child: const Text('다른 명언 보기'),
+                          child: Text(l10n.viewOtherQuote),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
-                ],
+                const SizedBox(height: 20),
               ],
-            ),
+            ],
           ),
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel(); // 타이머 정리
+    _interstitialAd?.dispose(); // 전면광고 정리
+    _bannerAd?.dispose(); // 배너광고 정리
+    super.dispose();
   }
 }
