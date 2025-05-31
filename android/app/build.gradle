@@ -5,6 +5,19 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+// local.properties에서 애드몹 키 읽기
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+def admobAppId = localProperties.getProperty('admob.app.id')
+def admobBannerId = localProperties.getProperty('admob.banner.id')
+def admobInterstitialId = localProperties.getProperty('admob.interstitial.id')
+
 android {
     namespace = "com.example.death_clock_app"
     compileSdk = flutter.compileSdkVersion
@@ -25,10 +38,15 @@ android {
         applicationId = "com.example.death_clock_app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = 23  // 애드몹 요구사항에 맞춰 23으로 변경
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        
+        // 애드몹 키를 BuildConfig에 추가
+        buildConfigField "String", "ADMOB_APP_ID", "\"${admobAppId}\""
+        buildConfigField "String", "ADMOB_BANNER_ID", "\"${admobBannerId}\""
+        buildConfigField "String", "ADMOB_INTERSTITIAL_ID", "\"${admobInterstitialId}\""
     }
 
     buildTypes {
@@ -37,6 +55,10 @@ android {
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.debug
         }
+    }
+    
+    buildFeatures {
+        buildConfig = true
     }
 }
 

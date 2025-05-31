@@ -7,14 +7,22 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'dart:math';
 import 'dart:async';
 import 'notification_service.dart';
+import 'ad_helper.dart';
 
-// 앱 진입점 - 알림 서비스 초기화 후 앱 실행
+// 앱 진입점 - 알림 서비스 및 애드몹 초기화 후 앱 실행
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await NotificationService.initialize(); // 푸시 알림 서비스 초기화
+  
+  // 푸시 알림 서비스 초기화
+  await NotificationService.initialize();
+  
+  // 애드몹 SDK 초기화
+  await MobileAds.instance.initialize();
+  
   runApp(const DeathClockApp());
 }
 
@@ -63,6 +71,14 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
   Timer? _timer; // 실시간 카운트다운을 위한 타이머
   bool notificationsEnabled = false; // 알림 설정 상태
   
+  // 애드몹 전면광고 관련 변수
+  InterstitialAd? _interstitialAd;
+  bool _isInterstitialAdReady = false;
+  
+  // 애드몹 배너광고 관련 변수
+  BannerAd? _bannerAd;
+  bool _isBannerAdReady = false;
+  
   // 날짜 선택을 위한 변수들 (룰렛 피커용)
   late int selectedYear; // 선택된 년도
   late int selectedMonth; // 선택된 월
@@ -87,6 +103,8 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
     selectedDay = now.day;
     _loadNotificationSettings(); // 저장된 알림 설정 불러오기
     _checkAndRequestNotificationPermission(); // 앱 시작 시 알림 권한 확인
+    _loadInterstitialAd(); // 전면광고 로드
+    _loadBannerAd(); // 배너광고 로드
   }
 
   Future<void> _loadNotificationSettings() async {
@@ -388,6 +406,8 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
   @override
   void dispose() {
     _timer?.cancel(); // 타이머 정리
+    _interstitialAd?.dispose(); // 전면광고 정리
+    _bannerAd?.dispose(); // 배너광고 정리
     super.dispose();
   }
 
@@ -474,7 +494,85 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
 당신의 남은 시간은? Death Clock 앱으로 확인해보세요!
 ''';
     
-    Share.share(shareText); // 시스템 공유 다이얼로그 호출
+    // 바로 공유 실행
+    Share.share(shareText);
+  }
+
+  // === 전면광고 로드 메서드 ===
+  void _loadInterstitialAd() {
+    InterstitialAd.load(
+      adUnitId: AdHelper.interstitialAdUnitId,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (InterstitialAd ad) {
+          print('전면광고 로드 완료');
+          _interstitialAd = ad;
+          _isInterstitialAdReady = true;
+          
+          // 앱 시작 직후 1번만 표시 (3초 후)
+          Timer(const Duration(seconds: 3), () {
+            _showInterstitialAd();
+          });
+          
+          // 광고 이벤트 리스너 설정
+          _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+            onAdShowedFullScreenContent: (InterstitialAd ad) =>
+                print('전면광고 표시됨'),
+            onAdDismissedFullScreenContent: (InterstitialAd ad) {
+              print('전면광고 닫힘');
+              ad.dispose();
+              _isInterstitialAdReady = false;
+              // 앱 시작 후에는 더 이상 로드하지 않음
+            },
+            onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+              print('전면광고 표시 실패: $error');
+              ad.dispose();
+              _isInterstitialAdReady = false;
+            },
+          );
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          print('전면광고 로드 실패: $error');
+          _isInterstitialAdReady = false;
+        },
+      ),
+    );
+  }
+
+  // === 전면광고 표시 메서드 ===
+  void _showInterstitialAd() {
+    if (_isInterstitialAdReady && _interstitialAd != null) {
+      _interstitialAd!.show();
+      _interstitialAd = null;
+      _isInterstitialAdReady = false;
+    }
+  }
+
+  // === 배너광고 로드 메서드 ===
+  void _loadBannerAd() {
+    _bannerAd = BannerAd(
+      adUnitId: AdHelper.bannerAdUnitId,
+      request: const AdRequest(),
+      size: AdSize.banner,
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          print('배너광고 로드 완료');
+          setState(() {
+            _isBannerAdReady = true;
+          });
+        },
+        onAdFailedToLoad: (ad, err) {
+          print('배너광고 로드 실패: ${err.message}');
+          ad.dispose();
+          _isBannerAdReady = false;
+          // 30초 후 재시도
+          Timer(const Duration(seconds: 30), () {
+            _loadBannerAd();
+          });
+        },
+      ),
+    );
+    _bannerAd!.load();
   }
 
   @override
@@ -499,6 +597,13 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
           ),
         ],
       ),
+      // 배너광고를 화면 하단에 표시
+      bottomNavigationBar: _isBannerAdReady && _bannerAd != null
+          ? Container(
+              height: _bannerAd!.size.height.toDouble(),
+              child: AdWidget(ad: _bannerAd!),
+            )
+          : null,
       body: Container(
         width: double.infinity,
         decoration: BoxDecoration(
