@@ -26,9 +26,11 @@ migrate_working_dir/
 # Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id
+**/ios/Flutter/flutter_export_environment.sh
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
 /build/
@@ -61,3 +63,23 @@ create_keystore.sh
 
 # AdMob 키 등 민감한 정보
 admob_keys.txt
+
+# 보안 관련 파일들
+# AdMob 설정 파일
+lib/config/admob_config.dart
+android/app/src/main/res/values/admob_config.xml
+ios/Runner/AdMobConfig.plist
+
+# 개인정보 포함 파일들
+**/personal_info.dart
+**/secrets.dart
+**/config.dart
+
+# 빌드 파일들
+*.apk
+*.aab
+*.ipa
+build/
+
+# 로그 파일들
+*.log

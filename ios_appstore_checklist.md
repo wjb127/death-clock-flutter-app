@@ -13,7 +13,7 @@
 - [x] 앱 설명 (한국어/영어/일본어/독일어)
 - [x] 출시 노트 (다국어)
 - [x] 개인정보처리방침 URL: https://github.com/wjb127/life-timer-privacy
-- [x] 개발자 정보: 앱돌이공장 (wjb127@naver.com)
+- [x] 개발자 정보: 앱돌이공장 (support@lifetimer.app)
 
 ---
 
