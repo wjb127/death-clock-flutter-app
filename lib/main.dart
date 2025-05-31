@@ -1,3 +1,7 @@
+// Death Clock 앱 - 남은 수명 계산기
+// 생일을 입력하면 100세 기준으로 남은 수명을 초 단위로 계산하여 표시
+// 매일 알림, 공유 기능, 동기부여 명언 제공
+
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -7,12 +11,14 @@ import 'dart:math';
 import 'dart:async';
 import 'notification_service.dart';
 
+// 앱 진입점 - 알림 서비스 초기화 후 앱 실행
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await NotificationService.initialize();
+  await NotificationService.initialize(); // 푸시 알림 서비스 초기화
   runApp(const DeathClockApp());
 }
 
+// 메인 앱 클래스 - Material Design 테마 및 다국어 설정
 class DeathClockApp extends StatelessWidget {
   const DeathClockApp({super.key});
 
@@ -21,23 +27,25 @@ class DeathClockApp extends StatelessWidget {
     return MaterialApp(
       title: 'Death Clock - 수명 계산기',
       theme: ThemeData(
-        primarySwatch: Colors.red,
+        primarySwatch: Colors.red, // 빨간색 테마
         fontFamily: 'Roboto',
       ),
+      // 한국어 지원을 위한 로케일 설정
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [
-        Locale('ko', 'KR'),
-        Locale('en', 'US'),
+        Locale('ko', 'KR'), // 한국어
+        Locale('en', 'US'), // 영어
       ],
       home: const DeathClockHomePage(),
     );
   }
 }
 
+// 홈페이지 위젯 - 메인 화면 구성
 class DeathClockHomePage extends StatefulWidget {
   const DeathClockHomePage({super.key});
 
@@ -45,19 +53,22 @@ class DeathClockHomePage extends StatefulWidget {
   State<DeathClockHomePage> createState() => _DeathClockHomePageState();
 }
 
+// 홈페이지 상태 관리 클래스
 class _DeathClockHomePageState extends State<DeathClockHomePage> {
-  DateTime? selectedBirthDate;
-  int remainingSeconds = 0;
-  double lifePercentage = 0.0;
-  int currentQuoteIndex = 0;
-  Timer? _timer;
-  bool notificationsEnabled = false;
+  // === 상태 변수들 ===
+  DateTime? selectedBirthDate; // 선택된 생일
+  int remainingSeconds = 0; // 남은 수명 (초 단위)
+  double lifePercentage = 0.0; // 인생 진행률 (%)
+  int currentQuoteIndex = 0; // 현재 표시 중인 명언 인덱스
+  Timer? _timer; // 실시간 카운트다운을 위한 타이머
+  bool notificationsEnabled = false; // 알림 설정 상태
   
-  // 날짜 선택을 위한 변수들
-  late int selectedYear;
-  late int selectedMonth;
-  late int selectedDay;
+  // 날짜 선택을 위한 변수들 (룰렛 피커용)
+  late int selectedYear; // 선택된 년도
+  late int selectedMonth; // 선택된 월
+  late int selectedDay; // 선택된 일
   
+  // 동기부여 명언 목록 (5개)
   final List<String> motivationalQuotes = [
     "시간은 생명이다. 낭비하지 마라.",
     "매 순간이 소중하다. 지금 이 순간을 살아라.",
@@ -83,14 +94,15 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
     });
   }
 
+  // === 설정 다이얼로그 표시 메서드 ===
   void _showSettingsDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return StatefulBuilder(
+        return StatefulBuilder( // 다이얼로그 내부 상태 관리를 위한 StatefulBuilder
           builder: (context, setDialogState) {
             return AlertDialog(
-              backgroundColor: Colors.grey[900],
+              backgroundColor: Colors.grey[900], // 다크 테마
               title: const Text(
                 '설정',
                 style: TextStyle(color: Colors.white),
@@ -108,7 +120,7 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
                       Switch(
                         value: notificationsEnabled,
                         onChanged: (value) async {
-                          // 먼저 다이얼로그 상태 업데이트
+                          // 먼저 다이얼로그 상태 업데이트 (즉시 UI 반영)
                           setDialogState(() {
                             notificationsEnabled = value;
                           });
@@ -117,6 +129,7 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
                           final prefs = await SharedPreferences.getInstance();
                           
                           if (value) {
+                            // 알림 켜기
                             await NotificationService.requestPermissions();
                             await NotificationService.scheduleDailyNotification();
                             await prefs.setBool('notifications_enabled', true);
@@ -130,6 +143,7 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
                               );
                             }
                           } else {
+                            // 알림 끄기
                             await NotificationService.cancelAllNotifications();
                             await prefs.setBool('notifications_enabled', false);
                             
@@ -148,7 +162,7 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
                             notificationsEnabled = value;
                           });
                         },
-                        activeColor: Colors.red[400],
+                        activeColor: Colors.red[400], // 스위치 활성화 색상
                       ),
                     ],
                   ),
@@ -157,6 +171,39 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
                     '매일 오후 8시에 수명 확인 알림을 받습니다',
                     style: TextStyle(color: Colors.white70, fontSize: 12),
                   ),
+                  // 알림 테스트 기능 (개발용 - 필요시 주석 해제)
+                  /*
+                  const SizedBox(height: 20),
+                  // 테스트 알림 버튼
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        await NotificationService.requestPermissions();
+                        await NotificationService.sendTestNotification();
+                        
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('🔔 테스트 알림을 보냈습니다! 알림창을 확인해보세요.'),
+                              backgroundColor: Colors.blue,
+                              duration: Duration(seconds: 3),
+                            ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.notifications_active, color: Colors.white),
+                      label: const Text(
+                        '알림 테스트',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue[700],
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                  */
                 ],
               ),
               actions: [
@@ -175,35 +222,40 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
     );
   }
 
+  // === 리소스 정리 메서드 ===
   @override
   void dispose() {
-    _timer?.cancel();
+    _timer?.cancel(); // 타이머 정리
     super.dispose();
   }
 
+  // === 날짜 변경 처리 메서드 ===
   void _onDateChanged() {
     setState(() {
       selectedBirthDate = DateTime(selectedYear, selectedMonth, selectedDay);
-      _calculateRemainingLife();
-      _startTimer();
+      _calculateRemainingLife(); // 수명 재계산
+      _startTimer(); // 타이머 재시작
     });
   }
 
+  // === 남은 수명 계산 메서드 ===
   void _calculateRemainingLife() {
     if (selectedBirthDate == null) return;
 
     final now = DateTime.now();
-    final age = now.difference(selectedBirthDate!);
-    final ageInYears = age.inDays / 365.25;
+    final age = now.difference(selectedBirthDate!); // 현재 나이 계산
+    final ageInYears = age.inDays / 365.25; // 년 단위로 변환 (윤년 고려)
     
-    // 100년 수명 기준
+    // 100년 수명 기준으로 계산
     const lifeExpectancy = 100.0;
     final remainingYears = lifeExpectancy - ageInYears;
     
     if (remainingYears > 0) {
+      // 남은 년수를 초 단위로 변환
       remainingSeconds = (remainingYears * 365.25 * 24 * 60 * 60).round();
-      lifePercentage = (ageInYears / lifeExpectancy) * 100;
+      lifePercentage = (ageInYears / lifeExpectancy) * 100; // 진행률 계산
     } else {
+      // 100세 초과한 경우
       remainingSeconds = 0;
       lifePercentage = 100.0;
     }
@@ -212,39 +264,43 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
     currentQuoteIndex = Random().nextInt(motivationalQuotes.length);
   }
 
+  // === 실시간 카운트다운 타이머 시작 ===
   void _startTimer() {
     _timer?.cancel(); // 기존 타이머가 있다면 취소
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (remainingSeconds > 0) {
         setState(() {
-          remainingSeconds--;
+          remainingSeconds--; // 매초마다 1초씩 감소
         });
       } else {
-        timer.cancel();
+        timer.cancel(); // 0에 도달하면 타이머 중지
       }
     });
   }
 
+  // === 시간 포맷팅 메서드 (초 → 년/일/시/분/초) ===
   String _formatTime(int seconds) {
     if (seconds <= 0) return "0초";
     
-    final years = seconds ~/ (365.25 * 24 * 60 * 60);
-    final days = (seconds % (365.25 * 24 * 60 * 60)) ~/ (24 * 60 * 60);
-    final hours = (seconds % (24 * 60 * 60)) ~/ (60 * 60);
-    final minutes = (seconds % (60 * 60)) ~/ 60;
-    final remainingSecs = seconds % 60;
+    final years = seconds ~/ (365.25 * 24 * 60 * 60); // 년 계산
+    final days = (seconds % (365.25 * 24 * 60 * 60)) ~/ (24 * 60 * 60); // 일 계산
+    final hours = (seconds % (24 * 60 * 60)) ~/ (60 * 60); // 시간 계산
+    final minutes = (seconds % (60 * 60)) ~/ 60; // 분 계산
+    final remainingSecs = seconds % 60; // 초 계산
 
     return "${years}년 ${days}일 ${hours}시간 ${minutes}분 ${remainingSecs}초";
   }
 
+  // === 해당 월의 최대 일수 계산 (윤년 고려) ===
   int _getDaysInMonth(int year, int month) {
     return DateTime(year, month + 1, 0).day;
   }
 
+  // === SNS 공유 기능 ===
   void _shareLifeStats() {
     if (selectedBirthDate == null) return;
     
-    final ageInYears = DateTime.now().difference(selectedBirthDate!).inDays / 365.25;
+    // 공유할 텍스트 생성
     final shareText = '''
 ⏰ Death Clock 수명 체크 결과
 
@@ -256,7 +312,7 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
 당신의 남은 시간은? Death Clock 앱으로 확인해보세요!
 ''';
     
-    Share.share(shareText);
+    Share.share(shareText); // 시스템 공유 다이얼로그 호출
   }
 
   @override
