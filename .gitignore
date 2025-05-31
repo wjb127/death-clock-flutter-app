@@ -43,3 +43,21 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# 🔐 보안 관련 파일들 (중요!)
+# 키스토어 파일
+*.jks
+*.keystore
+
+# 키스토어 설정 파일
+android/key.properties
+
+# 로컬 설정 파일
+android/local.properties
+
+# 키스토어 정보 파일
+keystore_info*.txt
+create_keystore.sh
+
+# AdMob 키 등 민감한 정보
+admob_keys.txt
