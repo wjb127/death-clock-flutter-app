@@ -70,12 +70,12 @@ class NotificationService {
     final message = _motivationalMessages[random.nextInt(_motivationalMessages.length)];
     
     try {
-      // 정확한 시간 알림 시도 (매일 오후 8시)
+      // 정확한 시간 알림 시도 (매일 아침 8시)
       await _notifications.zonedSchedule(
         0, // 알림 ID
         'Death Clock ⏰', // 알림 제목
         message, // 알림 내용
-        _nextInstanceOfTime(20, 0), // 매일 오후 8시
+        _nextInstanceOfTime(8, 0), // 매일 아침 8시
         const NotificationDetails(
           android: AndroidNotificationDetails(
             'daily_reminder', // 채널 ID

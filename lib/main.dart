@@ -80,11 +80,13 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
   @override
   void initState() {
     super.initState();
+    // 현재 날짜로 초기값 설정
     final now = DateTime.now();
     selectedYear = now.year;
     selectedMonth = now.month;
     selectedDay = now.day;
-    _loadNotificationSettings();
+    _loadNotificationSettings(); // 저장된 알림 설정 불러오기
+    _checkAndRequestNotificationPermission(); // 앱 시작 시 알림 권한 확인
   }
 
   Future<void> _loadNotificationSettings() async {
@@ -92,6 +94,134 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
     setState(() {
       notificationsEnabled = prefs.getBool('notifications_enabled') ?? false;
     });
+  }
+
+  // === 앱 시작 시 알림 권한 요청 ===
+  Future<void> _checkAndRequestNotificationPermission() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasAskedBefore = prefs.getBool('notification_permission_asked') ?? false;
+    
+    // 이전에 물어본 적이 없다면 권한 요청
+    if (!hasAskedBefore) {
+      // 잠시 후에 다이얼로그 표시 (UI가 완전히 로드된 후)
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showNotificationPermissionDialog();
+      });
+    }
+  }
+
+  // === 알림 권한 요청 다이얼로그 ===
+  void _showNotificationPermissionDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // 뒤로가기로 닫을 수 없음
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          title: Row(
+            children: [
+              Icon(Icons.notifications_active, color: Colors.red[400], size: 28),
+              const SizedBox(width: 10),
+              const Text(
+                '알림 설정',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '매일 아침 8시에 수명 확인 알림을 받으시겠습니까?',
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
+              const SizedBox(height: 15),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red[900]?.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red[300]!, width: 1),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '💡 알림의 효과:',
+                      style: TextStyle(color: Colors.red[300], fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 5),
+                    const Text(
+                      '• 매일 남은 시간을 인식하게 됩니다\n• 시간 관리 의식이 향상됩니다\n• 목표 달성 동기부여를 받습니다',
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                // 거부 선택
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('notification_permission_asked', true);
+                await prefs.setBool('notifications_enabled', false);
+                
+                setState(() {
+                  notificationsEnabled = false;
+                });
+                
+                Navigator.of(context).pop();
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('알림을 거부했습니다. 설정에서 언제든 변경할 수 있습니다.'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+              },
+              child: Text(
+                '나중에',
+                style: TextStyle(color: Colors.grey[400]),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                // 허용 선택
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('notification_permission_asked', true);
+                
+                // 알림 권한 요청 및 스케줄링
+                await NotificationService.requestPermissions();
+                await NotificationService.scheduleDailyNotification();
+                await prefs.setBool('notifications_enabled', true);
+                
+                setState(() {
+                  notificationsEnabled = true;
+                });
+                
+                Navigator.of(context).pop();
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('🔔 매일 아침 8시에 알림이 설정되었습니다!'),
+                    backgroundColor: Colors.green,
+                    duration: Duration(seconds: 3),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red[700],
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('알림 받기'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   // === 설정 다이얼로그 표시 메서드 ===
@@ -137,7 +267,7 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('매일 오후 8시에 알림이 설정되었습니다! 🔔'),
+                                  content: Text('매일 아침 8시에 알림이 설정되었습니다! 🔔'),
                                   backgroundColor: Colors.green,
                                 ),
                               );
@@ -168,9 +298,41 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
                   ),
                   const SizedBox(height: 10),
                   const Text(
-                    '매일 오후 8시에 수명 확인 알림을 받습니다',
+                    '매일 아침 8시에 수명 확인 알림을 받습니다',
                     style: TextStyle(color: Colors.white70, fontSize: 12),
                   ),
+                  // 개발용 권한 초기화 기능 (필요시 주석 해제)
+                  /*
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.remove('notification_permission_asked');
+                        await prefs.remove('notifications_enabled');
+                        
+                        setState(() {
+                          notificationsEnabled = false;
+                        });
+                        
+                        Navigator.of(context).pop();
+                        
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('권한 요청이 초기화되었습니다. 앱을 재시작하면 다시 물어봅니다.'),
+                            backgroundColor: Colors.blue,
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey[700],
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('권한 요청 초기화 (개발용)'),
+                    ),
+                  ),
+                  */
                   // 알림 테스트 기능 (개발용 - 필요시 주석 해제)
                   /*
                   const SizedBox(height: 20),
