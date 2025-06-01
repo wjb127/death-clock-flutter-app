@@ -106,3 +106,111 @@ Life Timerで意味のある毎日を始めましょう！ ⏰
 
 ## 📝 사용법
 이제 전체 내용을 복사해서 구글 플레이 콘솔의 출시 노트란에 붙여넣으시면 됩니다! 
+
+## v1.0.1 (2025년 6월 1일) - 안정성 개선 업데이트
+
+### ko-KR (한국어)
+🔧 안정성 대폭 개선!
+• 앱 시작 시 발생하던 크래시 문제 완전 해결
+• 초기화 과정 안정성 강화
+• UI 개선: 생일 선택 후 "남은 수명 보기" 버튼 추가
+• 메모리 관리 최적화
+• 전반적인 앱 성능 향상
+
+### de-DE (독일어)
+🔧 Große Stabilitätsverbesserungen!
+• App-Start-Absturz vollständig behoben
+• Verbesserte Initialisierungsstabilität
+• UI-Verbesserung: "Verbleibende Lebenszeit anzeigen" Button hinzugefügt
+• Optimierte Speicherverwaltung
+• Allgemeine Leistungsverbesserungen
+
+### en-GB (영국 영어)
+🔧 Major stability improvements!
+• Fixed app startup crash completely
+• Enhanced initialization stability
+• UI improvement: Added "View Remaining Life" button after birthday selection
+• Optimized memory management
+• Overall performance enhancements
+
+### en-IN (인도 영어)
+🔧 Major stability improvements!
+• Fixed app startup crash completely
+• Enhanced initialization stability
+• UI improvement: Added "View Remaining Life" button after birthday selection
+• Optimized memory management
+• Overall performance enhancements
+
+### en-US (미국 영어)
+🔧 Major stability improvements!
+• Fixed app startup crash completely
+• Enhanced initialization stability
+• UI improvement: Added "View Remaining Life" button after birthday selection
+• Optimized memory management
+• Overall performance enhancements
+
+### ja-JP (일본어)
+🔧 安定性の大幅改善！
+• アプリ起動時のクラッシュ問題を完全解決
+• 初期化プロセスの安定性強化
+• UI改善：誕生日選択後に「残り寿命を表示」ボタンを追加
+• メモリ管理の最適化
+• 全体的なアプリパフォーマンス向上
+
+---
+
+## v1.0.0 (2025년 5월 31일) - 첫 출시
+
+### ko-KR (한국어)
+🎉 Life Timer 첫 출시!
+• 생일 입력으로 100세 기준 남은 수명 계산
+• 실시간 카운트다운 타이머
+• 매일 아침 8시 동기부여 알림
+• 5가지 영감을 주는 명언
+• SNS 공유 기능
+• 4개국어 지원 (한국어, 영어, 일본어, 독일어)
+
+### de-DE (독일어)
+🎉 Life Timer Erstveröffentlichung!
+• Berechnung der verbleibenden Lebenszeit basierend auf 100 Jahren
+• Echtzeit-Countdown-Timer
+• Tägliche Motivationsbenachrichtigungen um 8 Uhr morgens
+• 5 inspirierende Zitate
+• Social Media Sharing
+• 4-Sprachen-Unterstützung
+
+### en-GB (영국 영어)
+🎉 Life Timer First Release!
+• Calculate remaining life based on 100 years from birthday
+• Real-time countdown timer
+• Daily motivation notifications at 8 AM
+• 5 inspiring quotes
+• Social media sharing
+• 4-language support
+
+### en-IN (인도 영어)
+🎉 Life Timer First Release!
+• Calculate remaining life based on 100 years from birthday
+• Real-time countdown timer
+• Daily motivation notifications at 8 AM
+• 5 inspiring quotes
+• Social media sharing
+• 4-language support
+
+### en-US (미국 영어)
+🎉 Life Timer First Release!
+• Calculate remaining life based on 100 years from birthday
+• Real-time countdown timer
+• Daily motivation notifications at 8 AM
+• 5 inspiring quotes
+• Social media sharing
+• 4-language support
+
+### ja-JP (일본어)
+🎉 Life Timer 初回リリース！
+• 誕生日から100歳基準で残り寿命を計算
+• リアルタイムカウントダウンタイマー
+• 毎朝8時のモチベーション通知
+• 5つのインスピレーション溢れる名言
+• SNSシェア機能
+• 4言語サポート 
