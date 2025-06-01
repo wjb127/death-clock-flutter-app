@@ -19,9 +19,25 @@ void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
     
+    // 기본 앱 실행 (초기화 실패해도 앱은 실행)
+    runApp(const DeathClockApp());
+    
+    // 백그라운드에서 서비스 초기화 (앱 실행 후)
+    _initializeServices();
+  } catch (e) {
+    print('앱 초기화 중 오류 발생: $e');
+    // 최소한의 앱이라도 실행
+    runApp(const DeathClockApp());
+  }
+}
+
+// 서비스들을 백그라운드에서 초기화
+void _initializeServices() async {
+  try {
     // 푸시 알림 서비스 초기화 (안전하게)
     try {
       await NotificationService.initialize();
+      print('알림 서비스 초기화 완료');
     } catch (e) {
       print('알림 서비스 초기화 실패: $e');
     }
@@ -29,15 +45,12 @@ void main() async {
     // 애드몹 SDK 초기화 (안전하게)
     try {
       await MobileAds.instance.initialize();
+      print('AdMob 초기화 완료');
     } catch (e) {
       print('AdMob 초기화 실패: $e');
     }
-    
-    runApp(const DeathClockApp());
   } catch (e) {
-    print('앱 초기화 중 오류 발생: $e');
-    // 기본 앱이라도 실행
-    runApp(const DeathClockApp());
+    print('서비스 초기화 중 전체 오류: $e');
   }
 }
 
@@ -123,25 +136,51 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
       selectedYear = now.year;
       selectedMonth = now.month;
       selectedDay = now.day;
-      _loadNotificationSettings(); // 저장된 알림 설정 불러오기
-      _checkAndRequestNotificationPermission(); // 앱 시작 시 알림 권한 확인
-      _loadInterstitialAd(); // 전면광고 로드
-      _loadBannerAd(); // 배너광고 로드
+      
+      // 기본 설정 로드
+      _loadNotificationSettings();
+      
+      // 권한 요청은 지연 실행
+      Future.delayed(const Duration(seconds: 1), () {
+        _checkAndRequestNotificationPermission();
+      });
+      
+      // 광고 로드는 더 지연 실행 (앱이 안정화된 후)
+      Future.delayed(const Duration(seconds: 3), () {
+        _loadInterstitialAd();
+        _loadBannerAd();
+      });
     } catch (e) {
       print('초기화 중 오류 발생: $e');
     }
   }
 
   Future<void> _loadNotificationSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      notificationsEnabled = prefs.getBool('notifications_enabled') ?? false;
-    });
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (mounted) {
+        setState(() {
+          notificationsEnabled = prefs.getBool('notifications_enabled') ?? false;
+        });
+      }
+    } catch (e) {
+      print('알림 설정 로드 실패: $e');
+      // 기본값으로 설정
+      if (mounted) {
+        setState(() {
+          notificationsEnabled = false;
+        });
+      }
+    }
   }
 
   // === 알림 권한 확인 및 요청 ===
   Future<void> _checkAndRequestNotificationPermission() async {
-    await NotificationService.requestPermissions();
+    try {
+      await NotificationService.requestPermissions();
+    } catch (e) {
+      print('알림 권한 요청 실패: $e');
+    }
   }
 
   // === 생일 선택 다이얼로그 표시 ===
@@ -419,24 +458,29 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
   // === 전면광고 로드 ===
   void _loadInterstitialAd() {
     try {
+      if (!mounted) return;
+      
       InterstitialAd.load(
         adUnitId: AdHelper.interstitialAdUnitId,
         request: const AdRequest(),
         adLoadCallback: InterstitialAdLoadCallback(
           onAdLoaded: (ad) {
             print('전면광고 로드 완료');
-            _interstitialAd = ad;
-            _isInterstitialAdReady = true;
-            
-            _interstitialAd!.setImmersiveMode(true);
+            if (mounted) {
+              _interstitialAd = ad;
+              _isInterstitialAdReady = true;
+              _interstitialAd!.setImmersiveMode(true);
+            }
           },
           onAdFailedToLoad: (err) {
             print('전면광고 로드 실패: ${err.message}');
-            _isInterstitialAdReady = false;
-            // 30초 후 재시도
-            Timer(const Duration(seconds: 30), () {
-              _loadInterstitialAd();
-            });
+            if (mounted) {
+              _isInterstitialAdReady = false;
+              // 30초 후 재시도
+              Timer(const Duration(seconds: 30), () {
+                if (mounted) _loadInterstitialAd();
+              });
+            }
           },
         ),
       );
@@ -513,6 +557,8 @@ What's your remaining time? Check with Death Clock app!''';
   // === 배너광고 로드 ===
   void _loadBannerAd() {
     try {
+      if (!mounted) return;
+      
       _bannerAd = BannerAd(
         adUnitId: AdHelper.bannerAdUnitId,
         request: const AdRequest(),
@@ -520,18 +566,22 @@ What's your remaining time? Check with Death Clock app!''';
         listener: BannerAdListener(
           onAdLoaded: (ad) {
             print('배너광고 로드 완료');
-            setState(() {
-              _isBannerAdReady = true;
-            });
+            if (mounted) {
+              setState(() {
+                _isBannerAdReady = true;
+              });
+            }
           },
           onAdFailedToLoad: (ad, err) {
             print('배너광고 로드 실패: ${err.message}');
             ad.dispose();
-            _isBannerAdReady = false;
-            // 30초 후 재시도
-            Timer(const Duration(seconds: 30), () {
-              _loadBannerAd();
-            });
+            if (mounted) {
+              _isBannerAdReady = false;
+              // 30초 후 재시도
+              Timer(const Duration(seconds: 30), () {
+                if (mounted) _loadBannerAd();
+              });
+            }
           },
         ),
       );
