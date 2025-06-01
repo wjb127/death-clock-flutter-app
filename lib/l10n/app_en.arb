@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appTitle": "⏰ Death Clock",
+  "appTitle": "Life Timer Calculator",
   "@appTitle": {
     "description": "The title of the application"
   },
@@ -46,11 +46,11 @@
   "@seconds": {
     "description": "Time unit: seconds"
   },
-  "dailyNotifications": "Daily Notifications",
+  "dailyNotifications": "3 Daily Notifications (8AM, 1PM, 6PM)",
   "@dailyNotifications": {
     "description": "Daily notifications setting"
   },
-  "notificationEnabled": "Daily notification set for 8 AM! 🔔",
+  "notificationEnabled": "Daily notifications set for 8AM, 1PM, and 6PM! 🔔",
   "@notificationEnabled": {
     "description": "Message when notifications are enabled"
   },

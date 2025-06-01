@@ -137,8 +137,9 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
       selectedMonth = now.month;
       selectedDay = now.day;
       
-      // 기본 설정 로드
+      // 기본 설정 로드 (생일 포함)
       _loadNotificationSettings();
+      _loadSavedBirthDate(); // 저장된 생일 로드 추가
       
       // 권한 요청은 지연 실행
       Future.delayed(const Duration(seconds: 1), () {
@@ -171,6 +172,40 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
           notificationsEnabled = false;
         });
       }
+    }
+  }
+
+  // === 저장된 생일 로드 ===
+  Future<void> _loadSavedBirthDate() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedBirthDateString = prefs.getString('birth_date');
+      
+      if (savedBirthDateString != null && mounted) {
+        final savedBirthDate = DateTime.parse(savedBirthDateString);
+        setState(() {
+          selectedBirthDate = savedBirthDate;
+          selectedYear = savedBirthDate.year;
+          selectedMonth = savedBirthDate.month;
+          selectedDay = savedBirthDate.day;
+          showLifeStats = true; // 저장된 생일이 있으면 바로 통계 표시
+          _calculateRemainingLife();
+        });
+        print('저장된 생일 로드됨: $savedBirthDate');
+      }
+    } catch (e) {
+      print('생일 로드 실패: $e');
+    }
+  }
+
+  // === 생일 저장 ===
+  Future<void> _saveBirthDate(DateTime birthDate) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('birth_date', birthDate.toIso8601String());
+      print('생일 저장됨: $birthDate');
+    } catch (e) {
+      print('생일 저장 실패: $e');
     }
   }
 
@@ -289,8 +324,12 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     final newBirthDate = DateTime(selectedYear, selectedMonth, selectedDay);
+                    
+                    // 생일 저장
+                    await _saveBirthDate(newBirthDate);
+                    
                     setState(() {
                       selectedBirthDate = newBirthDate;
                       showLifeStats = false; // 새로운 생일 선택 시 통계 숨김
@@ -329,6 +368,7 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // 알림 설정
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -385,6 +425,77 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
                       ),
                     ],
                   ),
+                  
+                  const SizedBox(height: 20),
+                  
+                  // 광고 상태 표시
+                  Container(
+                    padding: const EdgeInsets.all(15),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[800],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '📊 광고 상태',
+                          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Icon(
+                              _isBannerAdReady ? Icons.check_circle : Icons.error,
+                              color: _isBannerAdReady ? Colors.green : Colors.red,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '배너광고: ${_isBannerAdReady ? "준비됨" : "로딩중"}',
+                              style: const TextStyle(color: Colors.white70, fontSize: 14),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 5),
+                        Row(
+                          children: [
+                            Icon(
+                              _isInterstitialAdReady ? Icons.check_circle : Icons.error,
+                              color: _isInterstitialAdReady ? Colors.green : Colors.red,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '전면광고: ${_isInterstitialAdReady ? "준비됨" : "로딩중"}',
+                              style: const TextStyle(color: Colors.white70, fontSize: 14),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        const Divider(color: Colors.grey, height: 1),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.info_outline,
+                              color: Colors.blue,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '광고가 로딩되지 않으면 네트워크 연결을 확인하세요',
+                                style: const TextStyle(color: Colors.white60, fontSize: 12),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 15),
                 ],
               ),
               actions: [
@@ -460,12 +571,15 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
     try {
       if (!mounted) return;
       
+      print('🔄 전면광고 로드 시작...');
+      print('🎯 전면광고 ID: ${AdHelper.interstitialAdUnitId}');
+      
       InterstitialAd.load(
         adUnitId: AdHelper.interstitialAdUnitId,
         request: const AdRequest(),
         adLoadCallback: InterstitialAdLoadCallback(
           onAdLoaded: (ad) {
-            print('전면광고 로드 완료');
+            print('✅ 전면광고 로드 완료!');
             if (mounted) {
               _interstitialAd = ad;
               _isInterstitialAdReady = true;
@@ -473,40 +587,54 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
             }
           },
           onAdFailedToLoad: (err) {
-            print('전면광고 로드 실패: ${err.message}');
+            print('❌ 전면광고 로드 실패: ${err.message}');
+            print('🔍 오류 코드: ${err.code}');
+            print('🔍 오류 도메인: ${err.domain}');
             if (mounted) {
               _isInterstitialAdReady = false;
               // 30초 후 재시도
               Timer(const Duration(seconds: 30), () {
-                if (mounted) _loadInterstitialAd();
+                if (mounted) {
+                  print('🔄 전면광고 재시도...');
+                  _loadInterstitialAd();
+                }
               });
             }
           },
         ),
       );
     } catch (e) {
-      print('전면광고 로드 중 오류: $e');
+      print('💥 전면광고 로드 중 예외 발생: $e');
     }
   }
 
   // === 전면광고 표시 ===
   void _showInterstitialAd() {
+    print('🎬 전면광고 표시 시도...');
+    print('📊 광고 준비 상태: $_isInterstitialAdReady');
+    print('📊 광고 객체 존재: ${_interstitialAd != null}');
+    
     if (_isInterstitialAdReady && _interstitialAd != null) {
       _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
         onAdDismissedFullScreenContent: (ad) {
-          print('전면광고 닫힘');
+          print('✅ 전면광고 닫힘');
           ad.dispose();
           _loadInterstitialAd(); // 다음 광고 미리 로드
         },
         onAdFailedToShowFullScreenContent: (ad, err) {
-          print('전면광고 표시 실패: ${err.message}');
+          print('❌ 전면광고 표시 실패: ${err.message}');
           ad.dispose();
           _loadInterstitialAd();
+        },
+        onAdShowedFullScreenContent: (ad) {
+          print('✅ 전면광고 표시 성공!');
         },
       );
       
       _interstitialAd!.show();
       _isInterstitialAdReady = false;
+    } else {
+      print('⚠️ 전면광고를 표시할 수 없음 (준비되지 않음)');
     }
   }
 
@@ -559,13 +687,16 @@ What's your remaining time? Check with Death Clock app!''';
     try {
       if (!mounted) return;
       
+      print('🔄 배너광고 로드 시작...');
+      print('🎯 배너광고 ID: ${AdHelper.bannerAdUnitId}');
+      
       _bannerAd = BannerAd(
         adUnitId: AdHelper.bannerAdUnitId,
         request: const AdRequest(),
         size: AdSize.banner,
         listener: BannerAdListener(
           onAdLoaded: (ad) {
-            print('배너광고 로드 완료');
+            print('✅ 배너광고 로드 완료!');
             if (mounted) {
               setState(() {
                 _isBannerAdReady = true;
@@ -573,21 +704,32 @@ What's your remaining time? Check with Death Clock app!''';
             }
           },
           onAdFailedToLoad: (ad, err) {
-            print('배너광고 로드 실패: ${err.message}');
+            print('❌ 배너광고 로드 실패: ${err.message}');
+            print('🔍 오류 코드: ${err.code}');
+            print('🔍 오류 도메인: ${err.domain}');
             ad.dispose();
             if (mounted) {
               _isBannerAdReady = false;
               // 30초 후 재시도
               Timer(const Duration(seconds: 30), () {
-                if (mounted) _loadBannerAd();
+                if (mounted) {
+                  print('🔄 배너광고 재시도...');
+                  _loadBannerAd();
+                }
               });
             }
+          },
+          onAdOpened: (ad) {
+            print('📱 배너광고 클릭됨');
+          },
+          onAdClosed: (ad) {
+            print('📱 배너광고 닫힘');
           },
         ),
       );
       _bannerAd!.load();
     } catch (e) {
-      print('배너광고 로드 중 오류: $e');
+      print('💥 배너광고 로드 중 예외 발생: $e');
     }
   }
 
@@ -791,8 +933,8 @@ What's your remaining time? Check with Death Clock app!''';
                   child: ElevatedButton.icon(
                     onPressed: () {
                       _shareLifeStats();
-                      // 공유 시 전면광고 표시 (확률적으로)
-                      if (Random().nextBool()) {
+                      // 공유 시 전면광고 표시 (광고가 준비된 경우에만)
+                      if (_isInterstitialAdReady && _interstitialAd != null && Random().nextBool()) {
                         _showInterstitialAd();
                       }
                     },

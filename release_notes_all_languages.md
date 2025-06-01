@@ -214,3 +214,55 @@ Life Timerで意味のある毎日を始めましょう！ ⏰
 • 5つのインスピレーション溢れる名言
 • SNSシェア機能
 • 4言語サポート 
+
+## v1.0.2 (2025년 6월 1일) - 사용성 대폭 개선
+
+### ko-KR (한국어)
+🎉 사용성 대폭 개선!
+• 생일 자동 저장: 한 번 입력하면 영구 기억
+• 광고 상태 모니터링: 설정에서 실시간 확인 가능
+• 광고 테스트 기능: 전면광고 수동 테스트 버튼 추가
+• 상세한 로그: 문제 발생 시 원인 추적 가능
+• 전반적인 사용자 경험 향상
+
+### de-DE (독일어)
+🎉 Große Benutzerfreundlichkeitsverbesserungen!
+• Automatische Geburtstagsspeicherung: Einmal eingeben, für immer merken
+• Werbung-Status-Überwachung: Echtzeit-Überprüfung in den Einstellungen
+• Werbung-Test-Funktion: Manuelle Vollbild-Werbung-Test-Schaltfläche
+• Detaillierte Protokolle: Ursachenverfolgung bei Problemen
+• Allgemeine Benutzererfahrungsverbesserungen
+
+### en-GB (영국 영어)
+🎉 Major usability improvements!
+• Automatic birthday saving: Enter once, remember forever
+• Ad status monitoring: Real-time checking in settings
+• Ad test feature: Manual interstitial ad test button added
+• Detailed logging: Problem cause tracking available
+• Overall user experience enhancements
+
+### en-IN (인도 영어)
+🎉 Major usability improvements!
+• Automatic birthday saving: Enter once, remember forever
+• Ad status monitoring: Real-time checking in settings
+• Ad test feature: Manual interstitial ad test button added
+• Detailed logging: Problem cause tracking available
+• Overall user experience enhancements
+
+### en-US (미국 영어)
+🎉 Major usability improvements!
+• Automatic birthday saving: Enter once, remember forever
+• Ad status monitoring: Real-time checking in settings
+• Ad test feature: Manual interstitial ad test button added
+• Detailed logging: Problem cause tracking available
+• Overall user experience enhancements
+
+### ja-JP (일본어)
+🎉 使いやすさの大幅改善！
+• 誕生日自動保存：一度入力すれば永続記憶
+• 広告ステータス監視：設定でリアルタイム確認可能
+• 広告テスト機能：手動インタースティシャル広告テストボタン追加
+• 詳細ログ：問題発生時の原因追跡可能
+• 全体的なユーザーエクスペリエンス向上
+
+--- 

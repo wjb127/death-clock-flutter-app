@@ -1,6 +1,6 @@
 {
   "@@locale": "ko",
-  "appTitle": "⏰ Death Clock",
+  "appTitle": "남은수명계산기",
   "appSubtitle": "수명 계산기",
   "settings": "설정",
   "selectBirthday": "생일을 선택하세요",
@@ -13,8 +13,8 @@
   "hours": "시간",
   "minutes": "분",
   "seconds": "초",
-  "dailyNotifications": "매일 알림",
-  "notificationEnabled": "매일 아침 8시에 알림이 설정되었습니다! 🔔",
+  "dailyNotifications": "하루 3번 알림 (8시, 13시, 18시)",
+  "notificationEnabled": "매일 8시, 13시, 18시에 알림이 설정되었습니다! 🔔",
   "notificationDisabled": "알림이 해제되었습니다.",
   "shareLifeStats": "수명 공유하기",
   "viewOtherQuote": "다른 명언 보기",

@@ -88,42 +88,52 @@ class NotificationService {
     ];
     
     final random = Random();
-    final message = messages[random.nextInt(messages.length)];
     
     try {
-      // 정확한 시간 알림 시도 (매일 아침 8시)
-      await _notifications.zonedSchedule(
-        0, // 알림 ID
-        'Death Clock ⏰', // 알림 제목
-        message, // 알림 내용
-        _nextInstanceOfTime(8, 0), // 매일 아침 8시
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'daily_reminder', // 채널 ID
-            'Daily Life Reminder', // 채널 이름
-            channelDescription: '매일 수명 확인 알림',
-            importance: Importance.high, // 높은 우선순위
-            priority: Priority.high,
-            icon: '@mipmap/ic_launcher', // 알림 아이콘
+      // 하루 3번 알림 설정 (8시, 13시, 18시)
+      final notificationTimes = [
+        {'hour': 8, 'id': 1, 'title': 'Life Timer - Morning'},
+        {'hour': 13, 'id': 2, 'title': 'Life Timer - Afternoon'},
+        {'hour': 18, 'id': 3, 'title': 'Life Timer - Evening'},
+      ];
+      
+      for (final timeInfo in notificationTimes) {
+        final message = messages[random.nextInt(messages.length)];
+        
+        await _notifications.zonedSchedule(
+          timeInfo['id'] as int, // 각각 다른 알림 ID
+          timeInfo['title'] as String, // 시간대별 제목
+          message, // 알림 내용
+          _nextInstanceOfTime(timeInfo['hour'] as int, 0), // 지정된 시간
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'daily_reminder', // 채널 ID
+              'Daily Life Reminder', // 채널 이름
+              channelDescription: '매일 수명 확인 알림 (하루 3번)',
+              importance: Importance.high, // 높은 우선순위
+              priority: Priority.high,
+              icon: '@mipmap/ic_launcher', // 알림 아이콘
+            ),
+            iOS: DarwinNotificationDetails(
+              sound: 'default.wav',
+              presentAlert: true,
+              presentBadge: true,
+              presentSound: true,
+            ),
           ),
-          iOS: DarwinNotificationDetails(
-            sound: 'default.wav',
-            presentAlert: true,
-            presentBadge: true,
-            presentSound: true,
-          ),
-        ),
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-        matchDateTimeComponents: DateTimeComponents.time, // 매일 같은 시간 반복
-      );
+          uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+          matchDateTimeComponents: DateTimeComponents.time, // 매일 같은 시간 반복
+        );
+      }
     } catch (e) {
       // 정확한 알람이 허용되지 않는 경우, 대략적인 시간으로 스케줄링
       print('정확한 알람 권한이 없습니다. 대략적인 시간으로 설정합니다: $e');
       
       // 대신 24시간 간격 반복 알림으로 설정 (덜 정확하지만 작동함)
+      final message = messages[random.nextInt(messages.length)];
       await _notifications.periodicallyShow(
-        0,
-        'Death Clock ⏰',
+        1,
+        'Life Timer ⏰',
         message,
         RepeatInterval.daily, // 24시간마다 반복
         const NotificationDetails(
@@ -150,41 +160,51 @@ class NotificationService {
   static Future<void> scheduleDailyNotificationWithLocale(AppLocalizations l10n) async {
     final messages = getMotivationalMessages(l10n);
     final random = Random();
-    final message = messages[random.nextInt(messages.length)];
     
     try {
-      // 정확한 시간 알림 시도 (매일 아침 8시)
-      await _notifications.zonedSchedule(
-        0, // 알림 ID
-        l10n.appTitle, // 알림 제목
-        message, // 알림 내용
-        _nextInstanceOfTime(8, 0), // 매일 아침 8시
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'daily_reminder', // 채널 ID
-            'Daily Life Reminder', // 채널 이름
-            channelDescription: 'Daily life reminder notifications',
-            importance: Importance.high, // 높은 우선순위
-            priority: Priority.high,
-            icon: '@mipmap/ic_launcher', // 알림 아이콘
+      // 하루 3번 알림 설정 (8시, 13시, 18시)
+      final notificationTimes = [
+        {'hour': 8, 'id': 1, 'title': '${l10n.appTitle} - 아침'},
+        {'hour': 13, 'id': 2, 'title': '${l10n.appTitle} - 점심'},
+        {'hour': 18, 'id': 3, 'title': '${l10n.appTitle} - 저녁'},
+      ];
+      
+      for (final timeInfo in notificationTimes) {
+        final message = messages[random.nextInt(messages.length)];
+        
+        await _notifications.zonedSchedule(
+          timeInfo['id'] as int, // 각각 다른 알림 ID
+          timeInfo['title'] as String, // 시간대별 제목
+          message, // 알림 내용
+          _nextInstanceOfTime(timeInfo['hour'] as int, 0), // 지정된 시간
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'daily_reminder', // 채널 ID
+              'Daily Life Reminder', // 채널 이름
+              channelDescription: 'Daily life reminder notifications (3 times a day)',
+              importance: Importance.high, // 높은 우선순위
+              priority: Priority.high,
+              icon: '@mipmap/ic_launcher', // 알림 아이콘
+            ),
+            iOS: DarwinNotificationDetails(
+              sound: 'default.wav',
+              presentAlert: true,
+              presentBadge: true,
+              presentSound: true,
+            ),
           ),
-          iOS: DarwinNotificationDetails(
-            sound: 'default.wav',
-            presentAlert: true,
-            presentBadge: true,
-            presentSound: true,
-          ),
-        ),
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-        matchDateTimeComponents: DateTimeComponents.time, // 매일 같은 시간 반복
-      );
+          uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+          matchDateTimeComponents: DateTimeComponents.time, // 매일 같은 시간 반복
+        );
+      }
     } catch (e) {
       // 정확한 알람이 허용되지 않는 경우, 대략적인 시간으로 스케줄링
       print('정확한 알람 권한이 없습니다. 대략적인 시간으로 설정합니다: $e');
       
       // 대신 24시간 간격 반복 알림으로 설정 (덜 정확하지만 작동함)
+      final message = messages[random.nextInt(messages.length)];
       await _notifications.periodicallyShow(
-        0,
+        1,
         l10n.appTitle,
         message,
         RepeatInterval.daily, // 24시간마다 반복
