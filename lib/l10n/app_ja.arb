@@ -4,6 +4,8 @@
   "appSubtitle": "寿命計算機",
   "settings": "設定",
   "selectBirthday": "誕生日を選択してください",
+  "cancel": "キャンセル",
+  "confirm": "確認",
   "remainingLife": "残り寿命",
   "lifeProgress": "人生進行率",
   "years": "年",

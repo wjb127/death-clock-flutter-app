@@ -28,27 +28,32 @@ class NotificationService {
 
   // === 알림 서비스 초기화 ===
   static Future<void> initialize() async {
-    tz.initializeTimeZones(); // 타임존 데이터 초기화
-    
-    // Android 알림 설정
-    const AndroidInitializationSettings androidSettings = 
-        AndroidInitializationSettings('@mipmap/ic_launcher'); // 앱 아이콘 사용
-    
-    // iOS 알림 설정
-    const DarwinInitializationSettings iosSettings = 
-        DarwinInitializationSettings(
-          requestAlertPermission: true,  // 알림 표시 권한
-          requestBadgePermission: true,  // 뱃지 표시 권한
-          requestSoundPermission: true,  // 소리 재생 권한
-        );
-    
-    // 플랫폼별 설정 통합
-    const InitializationSettings settings = InitializationSettings(
-      android: androidSettings,
-      iOS: iosSettings,
-    );
-    
-    await _notifications.initialize(settings);
+    try {
+      tz.initializeTimeZones(); // 타임존 데이터 초기화
+      
+      // Android 알림 설정
+      const AndroidInitializationSettings androidSettings = 
+          AndroidInitializationSettings('@mipmap/ic_launcher'); // 앱 아이콘 사용
+      
+      // iOS 알림 설정
+      const DarwinInitializationSettings iosSettings = 
+          DarwinInitializationSettings(
+            requestAlertPermission: true,  // 알림 표시 권한
+            requestBadgePermission: true,  // 뱃지 표시 권한
+            requestSoundPermission: true,  // 소리 재생 권한
+          );
+      
+      // 플랫폼별 설정 통합
+      const InitializationSettings settings = InitializationSettings(
+        android: androidSettings,
+        iOS: iosSettings,
+      );
+      
+      await _notifications.initialize(settings);
+    } catch (e) {
+      print('알림 서비스 초기화 실패: $e');
+      // 초기화 실패해도 앱은 계속 실행
+    }
   }
 
   // === 알림 권한 요청 ===

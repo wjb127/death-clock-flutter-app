@@ -4,6 +4,8 @@
   "appSubtitle": "수명 계산기",
   "settings": "설정",
   "selectBirthday": "생일을 선택하세요",
+  "cancel": "취소",
+  "confirm": "확인",
   "remainingLife": "남은 수명",
   "lifeProgress": "인생 진행률",
   "years": "년",

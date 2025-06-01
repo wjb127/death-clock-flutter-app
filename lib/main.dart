@@ -16,15 +16,29 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 // 앱 진입점 - 알림 서비스 및 애드몹 초기화 후 앱 실행
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  
-  // 푸시 알림 서비스 초기화
-  await NotificationService.initialize();
-  
-  // 애드몹 SDK 초기화
-  await MobileAds.instance.initialize();
-  
-  runApp(const DeathClockApp());
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+    
+    // 푸시 알림 서비스 초기화 (안전하게)
+    try {
+      await NotificationService.initialize();
+    } catch (e) {
+      print('알림 서비스 초기화 실패: $e');
+    }
+    
+    // 애드몹 SDK 초기화 (안전하게)
+    try {
+      await MobileAds.instance.initialize();
+    } catch (e) {
+      print('AdMob 초기화 실패: $e');
+    }
+    
+    runApp(const DeathClockApp());
+  } catch (e) {
+    print('앱 초기화 중 오류 발생: $e');
+    // 기본 앱이라도 실행
+    runApp(const DeathClockApp());
+  }
 }
 
 // 메인 앱 클래스 - Material Design 테마 및 다국어 설정
@@ -74,6 +88,7 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
   int currentQuoteIndex = 0; // 현재 표시 중인 명언 인덱스
   Timer? _timer; // 실시간 카운트다운을 위한 타이머
   bool notificationsEnabled = false; // 알림 설정 상태
+  bool showLifeStats = false; // 남은 수명 통계 표시 여부
   
   // 애드몹 전면광고 관련 변수
   InterstitialAd? _interstitialAd;
@@ -102,15 +117,19 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
   @override
   void initState() {
     super.initState();
-    // 현재 날짜로 초기값 설정
-    final now = DateTime.now();
-    selectedYear = now.year;
-    selectedMonth = now.month;
-    selectedDay = now.day;
-    _loadNotificationSettings(); // 저장된 알림 설정 불러오기
-    _checkAndRequestNotificationPermission(); // 앱 시작 시 알림 권한 확인
-    _loadInterstitialAd(); // 전면광고 로드
-    _loadBannerAd(); // 배너광고 로드
+    try {
+      // 현재 날짜로 초기값 설정
+      final now = DateTime.now();
+      selectedYear = now.year;
+      selectedMonth = now.month;
+      selectedDay = now.day;
+      _loadNotificationSettings(); // 저장된 알림 설정 불러오기
+      _checkAndRequestNotificationPermission(); // 앱 시작 시 알림 권한 확인
+      _loadInterstitialAd(); // 전면광고 로드
+      _loadBannerAd(); // 배너광고 로드
+    } catch (e) {
+      print('초기화 중 오류 발생: $e');
+    }
   }
 
   Future<void> _loadNotificationSettings() async {
@@ -222,19 +241,29 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('취소', style: TextStyle(color: Colors.grey)),
-                ),
-                TextButton(
                   onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text(
+                    l10n.cancel,
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final newBirthDate = DateTime(selectedYear, selectedMonth, selectedDay);
                     setState(() {
-                      selectedBirthDate = DateTime(selectedYear, selectedMonth, selectedDay);
+                      selectedBirthDate = newBirthDate;
+                      showLifeStats = false; // 새로운 생일 선택 시 통계 숨김
                       _calculateRemainingLife();
-                      _startTimer();
                     });
                     Navigator.of(context).pop();
                   },
-                  child: const Text('확인', style: TextStyle(color: Colors.red)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red[700],
+                    foregroundColor: Colors.white,
+                  ),
+                  child: Text(l10n.confirm),
                 ),
               ],
             );
@@ -334,60 +363,86 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
 
   // === 남은 수명 계산 ===
   void _calculateRemainingLife() {
-    if (selectedBirthDate == null) return;
-
-    final now = DateTime.now();
-    final age = now.difference(selectedBirthDate!);
-    final ageInYears = age.inDays / 365.25;
-    
-    // 100세까지 남은 시간 계산
-    final remainingYears = 100 - ageInYears;
-    final remainingDays = remainingYears * 365.25;
-    remainingSeconds = (remainingDays * 24 * 60 * 60).round();
-    
-    // 인생 진행률 계산 (0-100%)
-    lifePercentage = (ageInYears / 100) * 100;
-    if (lifePercentage > 100) lifePercentage = 100;
-    if (lifePercentage < 0) lifePercentage = 0;
+    try {
+      if (selectedBirthDate == null) return;
+      
+      final now = DateTime.now();
+      final age = now.difference(selectedBirthDate!).inDays / 365.25;
+      final lifeExpectancy = 100.0; // 100세 기준
+      
+      if (age >= lifeExpectancy) {
+        setState(() {
+          remainingSeconds = 0;
+          lifePercentage = 100.0;
+        });
+        return;
+      }
+      
+      final remainingYears = lifeExpectancy - age;
+      final remainingDays = remainingYears * 365.25;
+      
+      setState(() {
+        remainingSeconds = (remainingDays * 24 * 60 * 60).round();
+        lifePercentage = (age / lifeExpectancy) * 100;
+      });
+    } catch (e) {
+      print('수명 계산 중 오류 발생: $e');
+    }
   }
 
-  // === 실시간 타이머 시작 ===
+  // === 실시간 카운트다운 타이머 시작 ===
   void _startTimer() {
-    _timer?.cancel(); // 기존 타이머 정리
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (remainingSeconds > 0) {
-        setState(() {
-          remainingSeconds--;
-        });
-      } else {
-        timer.cancel();
-      }
-    });
+    try {
+      _timer?.cancel(); // 기존 타이머 정리
+      
+      if (!showLifeStats || selectedBirthDate == null) return;
+      
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        try {
+          if (remainingSeconds > 0) {
+            setState(() {
+              remainingSeconds--;
+            });
+          } else {
+            timer.cancel();
+          }
+        } catch (e) {
+          print('타이머 업데이트 중 오류: $e');
+          timer.cancel();
+        }
+      });
+    } catch (e) {
+      print('타이머 시작 중 오류 발생: $e');
+    }
   }
 
   // === 전면광고 로드 ===
   void _loadInterstitialAd() {
-    InterstitialAd.load(
-      adUnitId: AdHelper.interstitialAdUnitId,
-      request: const AdRequest(),
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (ad) {
-          print('전면광고 로드 완료');
-          _interstitialAd = ad;
-          _isInterstitialAdReady = true;
-          
-          ad.setImmersiveMode(true);
-        },
-        onAdFailedToLoad: (err) {
-          print('전면광고 로드 실패: ${err.message}');
-          _isInterstitialAdReady = false;
-          // 30초 후 재시도
-          Timer(const Duration(seconds: 30), () {
-            _loadInterstitialAd();
-          });
-        },
-      ),
-    );
+    try {
+      InterstitialAd.load(
+        adUnitId: AdHelper.interstitialAdUnitId,
+        request: const AdRequest(),
+        adLoadCallback: InterstitialAdLoadCallback(
+          onAdLoaded: (ad) {
+            print('전면광고 로드 완료');
+            _interstitialAd = ad;
+            _isInterstitialAdReady = true;
+            
+            _interstitialAd!.setImmersiveMode(true);
+          },
+          onAdFailedToLoad: (err) {
+            print('전면광고 로드 실패: ${err.message}');
+            _isInterstitialAdReady = false;
+            // 30초 후 재시도
+            Timer(const Duration(seconds: 30), () {
+              _loadInterstitialAd();
+            });
+          },
+        ),
+      );
+    } catch (e) {
+      print('전면광고 로드 중 오류: $e');
+    }
   }
 
   // === 전면광고 표시 ===
@@ -457,29 +512,33 @@ What's your remaining time? Check with Death Clock app!''';
 
   // === 배너광고 로드 ===
   void _loadBannerAd() {
-    _bannerAd = BannerAd(
-      adUnitId: AdHelper.bannerAdUnitId,
-      request: const AdRequest(),
-      size: AdSize.banner,
-      listener: BannerAdListener(
-        onAdLoaded: (ad) {
-          print('배너광고 로드 완료');
-          setState(() {
-            _isBannerAdReady = true;
-          });
-        },
-        onAdFailedToLoad: (ad, err) {
-          print('배너광고 로드 실패: ${err.message}');
-          ad.dispose();
-          _isBannerAdReady = false;
-          // 30초 후 재시도
-          Timer(const Duration(seconds: 30), () {
-            _loadBannerAd();
-          });
-        },
-      ),
-    );
-    _bannerAd!.load();
+    try {
+      _bannerAd = BannerAd(
+        adUnitId: AdHelper.bannerAdUnitId,
+        request: const AdRequest(),
+        size: AdSize.banner,
+        listener: BannerAdListener(
+          onAdLoaded: (ad) {
+            print('배너광고 로드 완료');
+            setState(() {
+              _isBannerAdReady = true;
+            });
+          },
+          onAdFailedToLoad: (ad, err) {
+            print('배너광고 로드 실패: ${err.message}');
+            ad.dispose();
+            _isBannerAdReady = false;
+            // 30초 후 재시도
+            Timer(const Duration(seconds: 30), () {
+              _loadBannerAd();
+            });
+          },
+        ),
+      );
+      _bannerAd!.load();
+    } catch (e) {
+      print('배너광고 로드 중 오류: $e');
+    }
   }
 
   @override
@@ -556,14 +615,40 @@ What's your remaining time? Check with Death Clock app!''';
                       ),
                       child: Text(selectedBirthDate == null ? l10n.selectBirthday : '변경'),
                     ),
+                    
+                    // === 남은 수명 보기 버튼 (생일 선택 후에만 표시) ===
+                    if (selectedBirthDate != null && !showLifeStats) ...[
+                      const SizedBox(height: 15),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            showLifeStats = true;
+                            _calculateRemainingLife();
+                            _startTimer();
+                          });
+                        },
+                        icon: const Icon(Icons.visibility, color: Colors.white),
+                        label: const Text(
+                          '남은 수명 보기',
+                          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange[700],
+                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
               
               const SizedBox(height: 30),
               
-              // === 남은 수명 표시 (생일이 선택된 경우에만) ===
-              if (selectedBirthDate != null) ...[
+              // === 남은 수명 표시 (showLifeStats가 true일 때만) ===
+              if (selectedBirthDate != null && showLifeStats) ...[
                 // 남은 수명 카운터
                 Container(
                   width: double.infinity,
@@ -733,9 +818,13 @@ What's your remaining time? Check with Death Clock app!''';
 
   @override
   void dispose() {
-    _timer?.cancel(); // 타이머 정리
-    _interstitialAd?.dispose(); // 전면광고 정리
-    _bannerAd?.dispose(); // 배너광고 정리
+    try {
+      _timer?.cancel(); // 타이머 정리
+      _interstitialAd?.dispose(); // 전면광고 정리
+      _bannerAd?.dispose(); // 배너광고 정리
+    } catch (e) {
+      print('리소스 정리 중 오류: $e');
+    }
     super.dispose();
   }
 }

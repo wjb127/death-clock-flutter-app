@@ -4,6 +4,8 @@
   "appSubtitle": "Lebenszeit-Rechner",
   "settings": "Einstellungen",
   "selectBirthday": "Wählen Sie Ihr Geburtsdatum",
+  "cancel": "Abbrechen",
+  "confirm": "Bestätigen",
   "remainingLife": "Verbleibende Lebenszeit",
   "lifeProgress": "Lebensfortschritt",
   "years": "Jahre",

@@ -16,6 +16,8 @@
   "@selectBirthday": {
     "description": "Instruction to select birthday"
   },
+  "cancel": "Cancel",
+  "confirm": "Confirm",
   "remainingLife": "Remaining Life",
   "@remainingLife": {
     "description": "Label for remaining life time"
