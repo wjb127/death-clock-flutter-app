@@ -63,8 +63,8 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdkVersion = flutter.minSdkVersion  // 애드몹 요구사항에 맞춰 23으로 변경
         targetSdk = 36
-        versionCode = 6
-        versionName = "1.0.5"
+        versionCode = 7
+        versionName = "1.0.6"
         
         // 애드몹 키를 BuildConfig에 추가
         buildConfigField "String", "ADMOB_APP_ID", "\"${admobAppId}\""
