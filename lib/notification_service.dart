@@ -1,18 +1,24 @@
-// 푸시 알림 서비스 클래스
-// 매일 정해진 시간에 동기부여 메시지를 전송하는 기능 제공
+// 푸시 알림 서비스
+// 하루 3번(아침·점심·저녁) 동기부여 메시지를 기기 로컬 시간 기준으로 보낸다.
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'dart:math';
-import 'package:flutter/material.dart';
 import 'l10n/app_localizations.dart';
 
+/// 알림을 띄울 시각(기기 로컬 기준 24시간제).
+const List<int> kNotificationHours = <int>[8, 13, 18];
+
 class NotificationService {
-  // 알림 플러그인 인스턴스
-  static final FlutterLocalNotificationsPlugin _notifications = FlutterLocalNotificationsPlugin();
-  
-  // 다국어 지원 동기부여 메시지 목록을 반환하는 함수
+  static final FlutterLocalNotificationsPlugin _notifications =
+      FlutterLocalNotificationsPlugin();
+
+  static const String _channelId = 'daily_reminder';
+  static const String _channelName = 'Daily Life Reminder';
+
+  // 다국어 동기부여 메시지
   static List<String> getMotivationalMessages(AppLocalizations l10n) {
     return [
       l10n.notificationMessage1,
@@ -26,29 +32,27 @@ class NotificationService {
     ];
   }
 
-  // === 알림 서비스 초기화 ===
+  // === 초기화 ===
   static Future<void> initialize() async {
     try {
-      tz.initializeTimeZones(); // 타임존 데이터 초기화
-      
-      // Android 알림 설정
-      const AndroidInitializationSettings androidSettings = 
-          AndroidInitializationSettings('@mipmap/ic_launcher'); // 앱 아이콘 사용
-      
-      // iOS 알림 설정
-      const DarwinInitializationSettings iosSettings = 
+      tz.initializeTimeZones();
+      await _configureLocalTimeZone();
+
+      const AndroidInitializationSettings androidSettings =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
+
+      const DarwinInitializationSettings iosSettings =
           DarwinInitializationSettings(
-            requestAlertPermission: true,  // 알림 표시 권한
-            requestBadgePermission: true,  // 뱃지 표시 권한
-            requestSoundPermission: true,  // 소리 재생 권한
-          );
-      
-      // 플랫폼별 설정 통합
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      );
+
       const InitializationSettings settings = InitializationSettings(
         android: androidSettings,
         iOS: iosSettings,
       );
-      
+
       await _notifications.initialize(settings);
     } catch (e) {
       print('알림 서비스 초기화 실패: $e');
@@ -56,209 +60,130 @@ class NotificationService {
     }
   }
 
-  // === 알림 권한 요청 ===
+  /// tz.local 을 기기 시간대로 맞춘다.
+  ///
+  /// ★ 이걸 빠뜨리면 알림이 통째로 엉뚱한 시간에 울린다.
+  /// timezone 패키지의 initializeTimeZones()는 tz.local 을 **UTC로** 초기화한다
+  /// (timezone/lib/src/env.dart 의 initializeDatabase 가 `_local = _UTC`).
+  /// 그 상태로 8시를 예약하면 08:00 UTC = 한국 17시에 울린다.
+  /// 실제로 이 앱이 그 상태로 출시돼 있었다.
+  static Future<void> _configureLocalTimeZone() async {
+    try {
+      // flutter_timezone 5.x 는 TimezoneInfo 를 준다. IANA 식별자만 쓴다.
+      final info = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(info.identifier));
+    } catch (e) {
+      // 시간대 이름을 못 읽으면 tz.local 은 UTC로 남는다.
+      // 그래도 첫 발송 시각은 어긋나지 않는다 — nextInstanceOfTime 이
+      // 기기 로컬 DateTime 으로 절대시각을 잡고 변환하기 때문.
+      print('기기 시간대 확인 실패, UTC로 진행: $e');
+    }
+  }
+
+  // === 권한 요청 ===
   static Future<void> requestPermissions() async {
-    // Android 알림 권한 요청
     await _notifications
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
         ?.requestNotificationsPermission();
-    
-    // iOS 알림 권한 요청
+
     await _notifications
-        .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
-        ?.requestPermissions(
-          alert: true,  // 알림 표시
-          badge: true,  // 뱃지 표시
-          sound: true,  // 소리 재생
-        );
+        .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin>()
+        ?.requestPermissions(alert: true, badge: true, sound: true);
   }
 
-  // === 매일 반복 알림 스케줄링 (기본 영어 메시지) ===
-  static Future<void> scheduleDailyNotification() async {
-    // 기본 영어 메시지 사용 (앱 컨텍스트 없이 호출되는 경우)
-    final messages = [
-      "⏰ Check your remaining life and wake up!",
-      "💀 Time doesn't wait. Check now!",
-      "⚡ Every moment is precious. Check your remaining time!",
-      "🔥 Life is short. Make today meaningful!",
-      "💎 Time is your most precious asset. Check it!",
-      "🚀 Run towards your goals. Check your remaining time!",
-      "⭐ Cherish today too! Check your life timer",
-      "🎯 First step of time management: Check remaining life",
-    ];
-    
-    final random = Random();
-    
-    try {
-      // 하루 3번 알림 설정 (8시, 13시, 18시)
-      final notificationTimes = [
-        {'hour': 8, 'id': 1, 'title': 'Life Timer - Morning'},
-        {'hour': 13, 'id': 2, 'title': 'Life Timer - Afternoon'},
-        {'hour': 18, 'id': 3, 'title': 'Life Timer - Evening'},
-      ];
-      
-      for (final timeInfo in notificationTimes) {
-        final message = messages[random.nextInt(messages.length)];
-        
-        await _notifications.zonedSchedule(
-          timeInfo['id'] as int, // 각각 다른 알림 ID
-          timeInfo['title'] as String, // 시간대별 제목
-          message, // 알림 내용
-          _nextInstanceOfTime(timeInfo['hour'] as int, 0), // 지정된 시간
-          const NotificationDetails(
-            android: AndroidNotificationDetails(
-              'daily_reminder', // 채널 ID
-              'Daily Life Reminder', // 채널 이름
-              channelDescription: '매일 수명 확인 알림 (하루 3번)',
-              importance: Importance.high, // 높은 우선순위
-              priority: Priority.high,
-              icon: '@mipmap/ic_launcher', // 알림 아이콘
-            ),
-            iOS: DarwinNotificationDetails(
-              sound: 'default.wav',
-              presentAlert: true,
-              presentBadge: true,
-              presentSound: true,
-            ),
-          ),
-          uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-          matchDateTimeComponents: DateTimeComponents.time, // 매일 같은 시간 반복
-        );
-      }
-    } catch (e) {
-      // 정확한 알람이 허용되지 않는 경우, 대략적인 시간으로 스케줄링
-      print('정확한 알람 권한이 없습니다. 대략적인 시간으로 설정합니다: $e');
-      
-      // 대신 24시간 간격 반복 알림으로 설정 (덜 정확하지만 작동함)
-      final message = messages[random.nextInt(messages.length)];
-      await _notifications.periodicallyShow(
-        1,
-        'Life Timer ⏰',
-        message,
-        RepeatInterval.daily, // 24시간마다 반복
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'daily_reminder',
-            'Daily Life Reminder',
-            channelDescription: '매일 수명 확인 알림',
-            importance: Importance.high,
-            priority: Priority.high,
-            icon: '@mipmap/ic_launcher',
-          ),
-          iOS: DarwinNotificationDetails(
-            sound: 'default.wav',
-            presentAlert: true,
-            presentBadge: true,
-            presentSound: true,
-          ),
-        ),
-      );
-    }
-  }
-
-  // === 다국어 지원 매일 반복 알림 스케줄링 ===
-  static Future<void> scheduleDailyNotificationWithLocale(AppLocalizations l10n) async {
+  // === 매일 반복 알림 예약 ===
+  //
+  // 같은 메시지가 매일 똑같이 뜨지 않도록, 앱을 열 때마다 다시 예약한다
+  // (matchDateTimeComponents.time 은 예약 당시의 제목·본문을 그대로 반복한다).
+  static Future<void> scheduleDaily(AppLocalizations l10n) async {
     final messages = getMotivationalMessages(l10n);
-    final random = Random();
-    
-    try {
-      // 하루 3번 알림 설정 (8시, 13시, 18시)
-      final notificationTimes = [
-        {'hour': 8, 'id': 1, 'title': '${l10n.appTitle} - 아침'},
-        {'hour': 13, 'id': 2, 'title': '${l10n.appTitle} - 점심'},
-        {'hour': 18, 'id': 3, 'title': '${l10n.appTitle} - 저녁'},
-      ];
-      
-      for (final timeInfo in notificationTimes) {
-        final message = messages[random.nextInt(messages.length)];
-        
-        await _notifications.zonedSchedule(
-          timeInfo['id'] as int, // 각각 다른 알림 ID
-          timeInfo['title'] as String, // 시간대별 제목
-          message, // 알림 내용
-          _nextInstanceOfTime(timeInfo['hour'] as int, 0), // 지정된 시간
-          const NotificationDetails(
-            android: AndroidNotificationDetails(
-              'daily_reminder', // 채널 ID
-              'Daily Life Reminder', // 채널 이름
-              channelDescription: 'Daily life reminder notifications (3 times a day)',
-              importance: Importance.high, // 높은 우선순위
-              priority: Priority.high,
-              icon: '@mipmap/ic_launcher', // 알림 아이콘
-            ),
-            iOS: DarwinNotificationDetails(
-              sound: 'default.wav',
-              presentAlert: true,
-              presentBadge: true,
-              presentSound: true,
-            ),
-          ),
-          uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-          matchDateTimeComponents: DateTimeComponents.time, // 매일 같은 시간 반복
-        );
-      }
-    } catch (e) {
-      // 정확한 알람이 허용되지 않는 경우, 대략적인 시간으로 스케줄링
-      print('정확한 알람 권한이 없습니다. 대략적인 시간으로 설정합니다: $e');
-      
-      // 대신 24시간 간격 반복 알림으로 설정 (덜 정확하지만 작동함)
-      final message = messages[random.nextInt(messages.length)];
-      await _notifications.periodicallyShow(
-        1,
-        l10n.appTitle,
-        message,
-        RepeatInterval.daily, // 24시간마다 반복
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'daily_reminder',
-            'Daily Life Reminder',
-            channelDescription: 'Daily life reminder notifications',
-            importance: Importance.high,
-            priority: Priority.high,
-            icon: '@mipmap/ic_launcher',
-          ),
-          iOS: DarwinNotificationDetails(
-            sound: 'default.wav',
-            presentAlert: true,
-            presentBadge: true,
-            presentSound: true,
-          ),
+    // 세 알림이 같은 문구가 되지 않게 서로 다른 메시지를 뽑는다.
+    final picked = List<String>.from(messages)..shuffle(Random());
+
+    await cancelAllNotifications();
+
+    for (int i = 0; i < kNotificationHours.length; i++) {
+      final hour = kNotificationHours[i];
+      final details = NotificationDetails(
+        android: AndroidNotificationDetails(
+          _channelId,
+          _channelName,
+          channelDescription: 'Daily life reminder notifications',
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+        ),
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
         ),
       );
+
+      try {
+        await _notifications.zonedSchedule(
+          i + 1,
+          l10n.appTitle,
+          picked[i % picked.length],
+          nextInstanceOfTime(hour, 0),
+          details,
+          // ★ exact(기본값)이 아니라 inexact 를 쓴다.
+          // exact 는 SCHEDULE_EXACT_ALARM/USE_EXACT_ALARM 을 요구하는데,
+          // USE_EXACT_ALARM 은 Play가 알람시계·캘린더 앱에만 허용하는
+          // 제한 권한이라 이런 리마인더 앱이 달고 있으면 정책 리스크가 된다.
+          // 하루 3번 동기부여 알림에 분 단위 정확도는 필요 없다.
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          matchDateTimeComponents: DateTimeComponents.time,
+        );
+      } catch (e) {
+        // 한 슬롯이 실패해도 나머지는 예약한다.
+        // (예전 구현은 여기서 통째로 빠져나가 3개 중 1개만 걸렸다.)
+        print('알림 예약 실패 ($hour시): $e');
+      }
     }
   }
 
-  // === 다음 알림 시간 계산 (특정 시간) ===
-  static tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
-    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-    tz.TZDateTime scheduledDate = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
-    
-    // 오늘 해당 시간이 이미 지났다면 내일로 설정
-    if (scheduledDate.isBefore(now)) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1));
-    }
-    
-    return scheduledDate;
+  /// 알림이 켜져 있을 때만 다시 예약한다. 앱 시작 시 호출해 문구를 갱신한다.
+  static Future<void> refreshIfEnabled(
+      AppLocalizations l10n, bool enabled) async {
+    if (!enabled) return;
+    await scheduleDaily(l10n);
   }
 
-  // === 즉시 테스트 알림 전송 (개발용) ===
-  static Future<void> sendTestNotification() async {
-    // 기본 영어 메시지 사용
-    final messages = [
-      "⏰ Check your remaining life and wake up!",
-      "💀 Time doesn't wait. Check now!",
-      "⚡ Every moment is precious. Check your remaining time!",
-    ];
-    final random = Random();
-    final message = messages[random.nextInt(messages.length)];
-    
+  // === 다음 발송 시각 ===
+  //
+  // 기기 로컬 DateTime 으로 "다음 hour시 minute분"이라는 **절대 시각**을 먼저 정하고,
+  // 그걸 tz.local 표현으로 변환한다. tz.local 설정이 실패해 UTC로 남아 있어도
+  // 첫 발송 시각만큼은 사용자가 기대한 시계 시각에 맞는다.
+  static tz.TZDateTime nextInstanceOfTime(int hour, int minute,
+      {DateTime? now}) {
+    final DateTime current = now ?? DateTime.now();
+    DateTime target = DateTime(
+        current.year, current.month, current.day, hour, minute);
+
+    if (!target.isAfter(current)) {
+      target = target.add(const Duration(days: 1));
+    }
+
+    return tz.TZDateTime.from(target, tz.local);
+  }
+
+  // === 즉시 테스트 알림 ===
+  static Future<void> sendTestNotification(AppLocalizations l10n) async {
+    final messages = getMotivationalMessages(l10n);
+    final message = messages[Random().nextInt(messages.length)];
+
     await _notifications.show(
-      999, // 테스트용 고유 ID
-      'Death Clock ⏰ (Test)', // 테스트임을 명시
-      '$message\n\n✅ Notifications are working properly!',
+      999,
+      '${l10n.appTitle} (Test)',
+      '$message\n\n${l10n.notificationEnabled}',
       const NotificationDetails(
         android: AndroidNotificationDetails(
-          'test_notification', // 테스트용 별도 채널
+          'test_notification',
           'Test Notification',
           channelDescription: 'For testing notifications',
           importance: Importance.high,
@@ -266,7 +191,6 @@ class NotificationService {
           icon: '@mipmap/ic_launcher',
         ),
         iOS: DarwinNotificationDetails(
-          sound: 'default.wav',
           presentAlert: true,
           presentBadge: true,
           presentSound: true,
@@ -275,36 +199,7 @@ class NotificationService {
     );
   }
 
-  // === 다국어 지원 즉시 테스트 알림 전송 ===
-  static Future<void> sendTestNotificationWithLocale(AppLocalizations l10n) async {
-    final messages = getMotivationalMessages(l10n);
-    final random = Random();
-    final message = messages[random.nextInt(messages.length)];
-    
-    await _notifications.show(
-      999, // 테스트용 고유 ID
-      '${l10n.appTitle} (Test)', // 테스트임을 명시
-      '$message\n\n✅ ${l10n.notificationEnabled}',
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'test_notification', // 테스트용 별도 채널
-          'Test Notification',
-          channelDescription: 'For testing notifications',
-          importance: Importance.high,
-          priority: Priority.high,
-          icon: '@mipmap/ic_launcher',
-        ),
-        iOS: DarwinNotificationDetails(
-          sound: 'default.wav',
-          presentAlert: true,
-          presentBadge: true,
-          presentSound: true,
-        ),
-      ),
-    );
-  }
-
-  // === 모든 알림 취소 ===
+  // === 전체 취소 ===
   static Future<void> cancelAllNotifications() async {
     await _notifications.cancelAll();
   }

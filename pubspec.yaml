@@ -34,6 +34,8 @@ dependencies:
     sdk: flutter
   flutter_local_notifications: ^17.2.2
   timezone: ^0.9.4
+  # 기기 시간대 이름 조회 — tz.local 을 UTC가 아닌 실제 지역으로 맞추기 위해 필요
+  flutter_timezone: ^5.1.0
   shared_preferences: ^2.2.2
   share_plus: ^10.1.2
 

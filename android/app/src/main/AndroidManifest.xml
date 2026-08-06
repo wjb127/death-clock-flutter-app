@@ -5,9 +5,13 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
-    
+    <!--
+      정확 알람(SCHEDULE_EXACT_ALARM / USE_EXACT_ALARM)은 쓰지 않는다.
+      USE_EXACT_ALARM 은 Play가 알람시계·캘린더처럼 정확한 시각이 핵심 기능인
+      앱에만 허용하는 제한 권한이라, 하루 3번 동기부여 알림에 달고 있으면
+      정책 위반으로 걸릴 수 있다. 알림은 inexactAllowWhileIdle 로 예약한다.
+    -->
+
     <application
         android:label="@string/app_name"
         android:name="${applicationName}"

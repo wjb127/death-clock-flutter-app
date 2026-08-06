@@ -163,6 +163,17 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
         setState(() {
           notificationsEnabled = prefs.getBool('notifications_enabled') ?? false;
         });
+        // 알림이 켜져 있으면 앱을 열 때마다 다시 예약한다.
+        // matchDateTimeComponents.time 은 예약 당시의 문구를 매일 그대로 반복해서,
+        // 다시 예약하지 않으면 같은 메시지가 영원히 뜬다.
+        // 로케일은 위젯 트리가 준비된 뒤에만 읽을 수 있어 프레임 이후로 미룬다.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          NotificationService.refreshIfEnabled(
+            AppLocalizations.of(context)!,
+            notificationsEnabled,
+          );
+        });
       }
     } catch (e) {
       print('알림 설정 로드 실패: $e');
@@ -390,7 +401,7 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
                           if (value) {
                             // 알림 켜기
                             await NotificationService.requestPermissions();
-                            await NotificationService.scheduleDailyNotification();
+                            await NotificationService.scheduleDaily(l10n);
                             await prefs.setBool('notifications_enabled', true);
                             
                             if (mounted) {
