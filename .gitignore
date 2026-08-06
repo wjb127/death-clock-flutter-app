@@ -53,6 +53,7 @@ app.*.map.json
 
 # 키스토어 설정 파일
 android/key.properties
+/android/upload_certificate.pem
 
 # 로컬 설정 파일
 android/local.properties

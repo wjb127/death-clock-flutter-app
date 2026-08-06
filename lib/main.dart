@@ -12,7 +12,7 @@ import 'dart:math';
 import 'dart:async';
 import 'notification_service.dart';
 import 'ad_helper.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'l10n/app_localizations.dart';
 
 // 앱 진입점 - 알림 서비스 및 애드몹 초기화 후 앱 실행
 void main() async {

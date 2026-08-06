@@ -6,7 +6,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'l10n/app_localizations.dart';
 
 class NotificationService {
   // 알림 플러그인 인스턴스
@@ -308,4 +308,4 @@ class NotificationService {
   static Future<void> cancelAllNotifications() async {
     await _notifications.cancelAll();
   }
-} 
+}
