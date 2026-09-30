@@ -6,6 +6,7 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'l10n/app_localizations.dart';
 
 /// 알림을 띄울 시각(기기 로컬 기준 24시간제).
@@ -43,9 +44,10 @@ class NotificationService {
 
       const DarwinInitializationSettings iosSettings =
           DarwinInitializationSettings(
-        requestAlertPermission: true,
-        requestBadgePermission: true,
-        requestSoundPermission: true,
+        // Ask only when the user enables reminders, after any ad consent UI.
+        requestAlertPermission: false,
+        requestBadgePermission: false,
+        requestSoundPermission: false,
       );
 
       const InitializationSettings settings = InitializationSettings(
@@ -55,7 +57,7 @@ class NotificationService {
 
       await _notifications.initialize(settings);
     } catch (e) {
-      print('알림 서비스 초기화 실패: $e');
+      debugPrint('알림 서비스 초기화 실패: $e');
       // 초기화 실패해도 앱은 계속 실행
     }
   }
@@ -76,7 +78,7 @@ class NotificationService {
       // 시간대 이름을 못 읽으면 tz.local 은 UTC로 남는다.
       // 그래도 첫 발송 시각은 어긋나지 않는다 — nextInstanceOfTime 이
       // 기기 로컬 DateTime 으로 절대시각을 잡고 변환하기 때문.
-      print('기기 시간대 확인 실패, UTC로 진행: $e');
+      debugPrint('기기 시간대 확인 실패, UTC로 진행: $e');
     }
   }
 
@@ -142,7 +144,7 @@ class NotificationService {
       } catch (e) {
         // 한 슬롯이 실패해도 나머지는 예약한다.
         // (예전 구현은 여기서 통째로 빠져나가 3개 중 1개만 걸렸다.)
-        print('알림 예약 실패 ($hour시): $e');
+        debugPrint('알림 예약 실패 ($hour시): $e');
       }
     }
   }
@@ -162,8 +164,8 @@ class NotificationService {
   static tz.TZDateTime nextInstanceOfTime(int hour, int minute,
       {DateTime? now}) {
     final DateTime current = now ?? DateTime.now();
-    DateTime target = DateTime(
-        current.year, current.month, current.day, hour, minute);
+    DateTime target =
+        DateTime(current.year, current.month, current.day, hour, minute);
 
     if (!target.isAfter(current)) {
       target = target.add(const Duration(days: 1));

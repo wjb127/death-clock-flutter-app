@@ -1,0 +1,127 @@
+name: Verify iOS release build
+
+on:
+  workflow_dispatch:
+    inputs:
+      sign_release:
+        description: Create an App Store signed IPA using the registered Life Timer profile
+        type: boolean
+        default: false
+      upload_testflight:
+        description: Upload the signed IPA to App Store Connect for processing
+        type: boolean
+        default: false
+  pull_request:
+    paths:
+      - '.github/workflows/ios-build.yml'
+      - 'ios/**'
+      - 'lib/**'
+      - 'pubspec.*'
+
+permissions:
+  contents: read
+
+jobs:
+  ios-build:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - name: Validate release options
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          if [[ '${{ inputs.upload_testflight }}' == 'true' && '${{ inputs.sign_release }}' != 'true' ]]; then
+            echo 'Uploading requires sign_release.' >&2
+            exit 1
+          fi
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Install pinned Flutter SDK
+        run: |
+          git clone --depth 1 --branch 3.47.5 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - run: flutter --version
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+      - name: Build iOS release for signing preparation
+        run: flutter build ios --release --no-codesign
+      - name: Upload unsigned app for verification
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: life-timer-ios-unsigned
+          path: build/ios/iphoneos/Runner.app
+          retention-days: 7
+          if-no-files-found: error
+      - name: Install Life Timer signing certificate and profile
+        if: github.event_name == 'workflow_dispatch' && inputs.sign_release
+        env:
+          P12_BASE64: ${{ secrets.LIFE_TIMER_IOS_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.LIFE_TIMER_IOS_P12_PASSWORD }}
+          PROFILE_BASE64: ${{ secrets.LIFE_TIMER_IOS_PROFILE_BASE64 }}
+        run: |
+          set -euo pipefail
+          test -n "$P12_BASE64" && test -n "$P12_PASSWORD" && test -n "$PROFILE_BASE64"
+          CERT_PATH="$RUNNER_TEMP/life-timer.p12"
+          PROFILE_PATH="$RUNNER_TEMP/life-timer.mobileprovision"
+          KEYCHAIN_PATH="$RUNNER_TEMP/life-timer.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -base64 32)"
+          echo "::add-mask::$KEYCHAIN_PASSWORD"
+          printf '%s' "$P12_BASE64" | base64 --decode > "$CERT_PATH"
+          printf '%s' "$PROFILE_BASE64" | base64 --decode > "$PROFILE_PATH"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain-db
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/acbdb8ae-ddcd-4658-be86-2cae9d72c044.mobileprovision"
+      - name: Archive and export signed IPA
+        if: github.event_name == 'workflow_dispatch' && inputs.sign_release
+        run: |
+          set -euo pipefail
+          ruby -rxcodeproj <<'RUBY'
+          project = Xcodeproj::Project.open('ios/Runner.xcodeproj')
+          runner = project.targets.find { |target| target.name == 'Runner' }
+          runner.build_configurations.each do |config|
+            next unless config.name == 'Release'
+            config.build_settings['CODE_SIGN_STYLE'] = 'Manual'
+            config.build_settings['CODE_SIGN_IDENTITY'] = 'Apple Distribution'
+            config.build_settings['DEVELOPMENT_TEAM'] = '9Q26686S8R'
+            config.build_settings['PROVISIONING_PROFILE_SPECIFIER'] = 'Life Timer AppStore 2026'
+          end
+          project.save
+          RUBY
+          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release -destination 'generic/platform=iOS' -archivePath build/ios/archive/LifeTimer.xcarchive archive
+          xcodebuild -exportArchive -archivePath build/ios/archive/LifeTimer.xcarchive -exportPath build/ios/ipa -exportOptionsPlist ios/ExportOptions.plist
+          codesign --verify --deep --strict build/ios/archive/LifeTimer.xcarchive/Products/Applications/Runner.app
+      - name: Upload signed IPA
+        if: github.event_name == 'workflow_dispatch' && inputs.sign_release
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: life-timer-ios-app-store
+          path: build/ios/ipa/*.ipa
+          retention-days: 7
+          if-no-files-found: error
+      - name: Remove temporary signing files
+        if: always() && github.event_name == 'workflow_dispatch' && inputs.sign_release
+        run: |
+          security delete-keychain "$RUNNER_TEMP/life-timer.keychain-db" || true
+          rm -f "$RUNNER_TEMP/life-timer.p12" "$RUNNER_TEMP/life-timer.mobileprovision"
+          rm -f "$HOME/Library/MobileDevice/Provisioning Profiles/acbdb8ae-ddcd-4658-be86-2cae9d72c044.mobileprovision"
+      - name: Validate and upload to App Store Connect
+        if: github.event_name == 'workflow_dispatch' && inputs.sign_release && inputs.upload_testflight
+        env:
+          ASC_KEY_BASE64: ${{ secrets.LIFE_TIMER_ASC_KEY_BASE64 }}
+        run: |
+          set -euo pipefail
+          test -n "$ASC_KEY_BASE64"
+          mkdir -p "$RUNNER_TEMP/asc-private-keys"
+          export API_PRIVATE_KEYS_DIR="$RUNNER_TEMP/asc-private-keys"
+          KEY_PATH="$API_PRIVATE_KEYS_DIR/AuthKey_7B7MDM4N2M.p8"
+          trap 'rm -f "$KEY_PATH"' EXIT
+          printf '%s' "$ASC_KEY_BASE64" | base64 --decode > "$KEY_PATH"
+          chmod 600 "$KEY_PATH"
+          IPA_PATH=$(find build/ios/ipa -name '*.ipa' -print -quit)
+          test -n "$IPA_PATH"
+          xcrun altool --validate-app -f "$IPA_PATH" -t ios --apiKey 7B7MDM4N2M --apiIssuer f8a8b51b-e563-4cc0-a0e7-91f387396c25
+          xcrun altool --upload-app -f "$IPA_PATH" -t ios --apiKey 7B7MDM4N2M --apiIssuer f8a8b51b-e563-4cc0-a0e7-91f387396c25
