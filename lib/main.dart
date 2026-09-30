@@ -139,11 +139,6 @@ class _DeathClockHomePageState extends State<DeathClockHomePage>
       _loadNotificationSettings();
       _loadSavedBirthDate(); // 저장된 생일 로드 추가
 
-      // 권한 요청은 지연 실행
-      Future.delayed(const Duration(seconds: 1), () {
-        if (mounted) _checkAndRequestNotificationPermission();
-      });
-
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _initializeAds();
       });
@@ -250,15 +245,6 @@ class _DeathClockHomePageState extends State<DeathClockHomePage>
       debugPrint('생일 저장됨: $birthDate');
     } catch (e) {
       debugPrint('생일 저장 실패: $e');
-    }
-  }
-
-  // === 알림 권한 확인 및 요청 ===
-  Future<void> _checkAndRequestNotificationPermission() async {
-    try {
-      await NotificationService.requestPermissions();
-    } catch (e) {
-      debugPrint('알림 권한 요청 실패: $e');
     }
   }
 
