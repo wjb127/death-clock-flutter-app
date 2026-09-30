@@ -104,6 +104,7 @@ class _DeathClockHomePageState extends State<DeathClockHomePage>
   bool _privacyOptionsRequired = false;
   bool _bannerLoading = false;
   bool _interstitialLoading = false;
+  int _adGeneration = 0;
   bool notificationsEnabled = false; // 알림 설정 상태
   bool showLifeStats = false; // 남은 수명 통계 표시 여부
 
@@ -180,11 +181,12 @@ class _DeathClockHomePageState extends State<DeathClockHomePage>
 
   Future<void> _initializeAds() async {
     if (!AdHelper.adsEnabled) return;
+    final generation = _adGeneration;
     try {
       final allowed = await prepareAds();
       final required = await ConsentInformation.instance
           .getPrivacyOptionsRequirementStatus();
-      if (!mounted) return;
+      if (!mounted || generation != _adGeneration) return;
       setState(() {
         _adsAllowed = allowed;
         _privacyOptionsRequired =
@@ -200,6 +202,9 @@ class _DeathClockHomePageState extends State<DeathClockHomePage>
   }
 
   Future<void> _showAdPrivacyOptions() async {
+    _adGeneration++;
+    _bannerLoading = false;
+    _interstitialLoading = false;
     _bannerRetry?.cancel();
     _interstitialRetry?.cancel();
     setState(() {
@@ -514,6 +519,7 @@ class _DeathClockHomePageState extends State<DeathClockHomePage>
         return;
       }
       _interstitialLoading = true;
+      final generation = _adGeneration;
 
       debugPrint('🔄 전면광고 로드 시작...');
       debugPrint('🎯 전면광고 ID: ${AdHelper.interstitialAdUnitId}');
@@ -523,6 +529,10 @@ class _DeathClockHomePageState extends State<DeathClockHomePage>
         request: const AdRequest(),
         adLoadCallback: InterstitialAdLoadCallback(
           onAdLoaded: (ad) {
+            if (generation != _adGeneration || !mounted) {
+              ad.dispose();
+              return;
+            }
             _interstitialLoading = false;
             debugPrint('✅ 전면광고 로드 완료!');
             if (mounted && _adsAllowed) {
@@ -534,6 +544,7 @@ class _DeathClockHomePageState extends State<DeathClockHomePage>
             }
           },
           onAdFailedToLoad: (err) {
+            if (generation != _adGeneration || !mounted) return;
             _interstitialLoading = false;
             debugPrint('❌ 전면광고 로드 실패: ${err.message}');
             debugPrint('🔍 오류 코드: ${err.code}');
@@ -661,6 +672,7 @@ What's your remaining time? Check with Death Clock app!''';
         return;
       }
       _bannerLoading = true;
+      final generation = _adGeneration;
 
       debugPrint('🔄 배너광고 로드 시작...');
       debugPrint('🎯 배너광고 ID: ${AdHelper.bannerAdUnitId}');
@@ -671,6 +683,10 @@ What's your remaining time? Check with Death Clock app!''';
         size: AdSize.banner,
         listener: BannerAdListener(
           onAdLoaded: (ad) {
+            if (generation != _adGeneration || !mounted) {
+              ad.dispose();
+              return;
+            }
             _bannerLoading = false;
             debugPrint('✅ 배너광고 로드 완료!');
             if (mounted && _adsAllowed) {
@@ -682,6 +698,10 @@ What's your remaining time? Check with Death Clock app!''';
             }
           },
           onAdFailedToLoad: (ad, err) {
+            if (generation != _adGeneration || !mounted) {
+              ad.dispose();
+              return;
+            }
             _bannerLoading = false;
             debugPrint('❌ 배너광고 로드 실패: ${err.message}');
             debugPrint('🔍 오류 코드: ${err.code}');
@@ -1010,6 +1030,7 @@ What's your remaining time? Check with Death Clock app!''';
 
   @override
   void dispose() {
+    _adGeneration++;
     try {
       WidgetsBinding.instance.removeObserver(this);
       _clock.dispose();
