@@ -55,6 +55,7 @@ class DeathClockApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Death Clock - Life Timer',
       theme: ThemeData(
         primarySwatch: Colors.red, // 빨간색 테마
