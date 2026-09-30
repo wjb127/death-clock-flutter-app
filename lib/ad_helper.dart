@@ -6,9 +6,8 @@ class AdHelper {
   static const androidBannerId = 'ca-app-pub-2803803669720807/1200245993';
   static const androidInterstitialId = 'ca-app-pub-2803803669720807/2571646800';
   // iOS needs its own AdMob app; never reuse the Android app ID.
-  static const iosBannerId = String.fromEnvironment('ADMOB_IOS_BANNER_ID');
-  static const iosInterstitialId =
-      String.fromEnvironment('ADMOB_IOS_INTERSTITIAL_ID');
+  static const iosBannerId = 'ca-app-pub-2803803669720807/4070875354';
+  static const iosInterstitialId = 'ca-app-pub-2803803669720807/8476015061';
 
   static bool get isSupported =>
       !kIsWeb &&

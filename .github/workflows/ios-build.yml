@@ -1,0 +1,37 @@
+name: Verify iOS release build
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/ios-build.yml'
+      - 'ios/**'
+      - 'lib/**'
+      - 'pubspec.*'
+
+permissions:
+  contents: read
+
+jobs:
+  ios-build:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Install pinned Flutter SDK
+        run: |
+          git clone --depth 1 --branch 3.47.5 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - run: flutter --version
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+      - name: Build iOS release for signing preparation
+        run: flutter build ios --release --no-codesign
+      - name: Upload unsigned app for verification
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: life-timer-ios-unsigned
+          path: build/ios/iphoneos/Runner.app
+          retention-days: 7
+          if-no-files-found: error

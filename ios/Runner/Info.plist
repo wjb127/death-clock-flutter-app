@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Death Clock App</string>
+	<string>Life Timer</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -47,6 +47,6 @@
 	<true/>
 	<!-- AdMob 앱 ID (실제 키) -->
 	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-2803803669720807~9788102907</string>
+	<string>ca-app-pub-2803803669720807~3415260072</string>
 </dict>
 </plist>
