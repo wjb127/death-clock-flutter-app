@@ -1,6 +1,11 @@
 name: Capture iOS store screenshots
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/ios-screenshots.yml'
+      - 'integration_test/store_screenshots_test.dart'
+      - 'test_driver/store_screenshots.dart'
 permissions:
   contents: read
 jobs:
