@@ -1,0 +1,35 @@
+name: Capture iOS store screenshots
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  screenshots:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Install pinned Flutter
+        run: |
+          git clone --depth 1 --branch 3.47.5 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - run: flutter pub get
+      - name: Boot an available large iPhone simulator
+        run: |
+          xcrun simctl list devices available -j > "$RUNNER_TEMP/devices.json"
+          DEVICE_ID=$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); phones=[v for r,vs in d["devices"].items() if "iOS" in r for v in vs if "Pro Max" in v["name"]]; assert phones,"No Pro Max iOS simulator installed"; print(phones[-1]["udid"])' "$RUNNER_TEMP/devices.json")
+          echo "SIMULATOR_ID=$DEVICE_ID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$DEVICE_ID"
+          xcrun simctl bootstatus "$DEVICE_ID" -b
+          xcrun simctl spawn "$DEVICE_ID" defaults write NSGlobalDomain AppleLanguages -array ko
+          xcrun simctl spawn "$DEVICE_ID" defaults write NSGlobalDomain AppleLocale ko_KR
+          xcrun simctl status_bar "$DEVICE_ID" override --time '9:41' --batteryState charged --batteryLevel 100
+      - name: Capture and verify app screens
+        run: flutter drive --driver=test_driver/store_screenshots.dart --target=integration_test/store_screenshots_test.dart -d "$SIMULATOR_ID"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: life-timer-ios-screenshots
+          path: build/store-screenshots/*.png
+          if-no-files-found: error
+          retention-days: 7
