@@ -1,0 +1,5 @@
+• Fixed the countdown staying frozen after reopening the app
+• Hours, minutes and seconds now tick accurately in real time
+• Cleaner settings screen
+• Improved English, Japanese and German translations
+• Shared results now include a link to the app

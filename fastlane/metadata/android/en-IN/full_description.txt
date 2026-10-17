@@ -1,0 +1,18 @@
+Life Timer shows the time you have left until age 100 in years, days, hours, minutes and seconds, ticking live on your screen.
+
+Enter your birthday once and you're done. No account, no sign-up, no questionnaire. Your birthday stays on your device.
+
+What you get
+• A live countdown to age 100, down to the second
+• A life-progress bar that shows how far along you are
+• A short line of motivation, with another one a tap away
+• Optional reminders three times a day (8 AM, 1 PM, 6 PM)
+• Share your countdown with friends
+
+Why people use it
+Watching the seconds move is a quiet nudge to spend today on what matters. A calm memento mori and life clock, without the doom.
+
+Please note
+Life Timer uses a fixed 100-year reference. It does not use life expectancy statistics, does not predict your actual lifespan or health, and does not provide medical information.
+
+The app is free and supported by ads.

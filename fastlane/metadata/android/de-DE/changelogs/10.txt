@@ -1,0 +1,5 @@
+• Countdown bleibt nach erneutem Öffnen nicht mehr stehen
+• Stunden, Minuten und Sekunden laufen jetzt genau in Echtzeit
+• Aufgeräumter Einstellungsbildschirm
+• Verbesserte englische, japanische und deutsche Texte
+• Geteilte Ergebnisse enthalten jetzt einen Link zur App

@@ -385,9 +385,12 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        l10n.dailyNotifications,
-                        style: const TextStyle(color: Colors.white, fontSize: 16),
+                      // 문구가 긴 언어(영어 등)에서 스위치를 밀어내 넘치지 않도록 남는 폭만 쓴다
+                      Expanded(
+                        child: Text(
+                          l10n.dailyNotifications,
+                          style: const TextStyle(color: Colors.white, fontSize: 16),
+                        ),
                       ),
                       Switch(
                         value: notificationsEnabled,

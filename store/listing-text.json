@@ -1,0 +1,26 @@
+{
+  "ko": {
+    "title": "Life Timer - 남은수명계산기",
+    "short": "생일만 입력하면 100세까지 남은 시간을 초 단위로 보여주는 카운트다운",
+    "full": "Life Timer는 100세까지 남은 시간을 년·일·시간·분·초로 보여주는 카운트다운 앱입니다. 화면 속 초가 실시간으로 흘러갑니다.\n\n생일을 한 번만 입력하면 끝입니다. 회원가입도, 설문도 없습니다. 생일은 기기에만 저장됩니다.\n\n주요 기능\n• 100세까지 남은 시간을 초 단위로 실시간 표시\n• 지금까지 지나온 인생 진행률\n• 하루를 깨우는 한 줄 문구 (탭하면 다른 문구)\n• 원할 때만 켜는 하루 세 번 알림 (오전 8시, 오후 1시, 오후 6시)\n• 친구에게 내 남은 시간 공유하기\n\n이렇게 써요\n초가 줄어드는 걸 보면 오늘 하루를 어디에 쓸지 한 번 더 생각하게 됩니다. 무섭지 않은 메멘토 모리, 조용한 인생 시계입니다.\n\n안내\nLife Timer는 100년이라는 고정 기준으로 계산하는 단순한 시간 도구입니다. 통계청 기대수명 데이터를 사용하지 않으며, 실제 수명이나 건강 상태를 예측하거나 의료 정보를 제공하지 않습니다.\n\n앱은 무료이며 광고가 포함되어 있습니다.",
+    "changes": "• 앱을 다시 열면 카운트다운이 멈춰 있던 문제를 고쳤습니다\n• 시·분·초가 실시간으로 정확히 흐르도록 계산을 개선했습니다\n• 설정 화면을 정리했습니다\n• 영어·일본어·독일어 화면을 다듬었습니다\n• 공유 문구에 앱 링크를 넣었습니다"
+  },
+  "en": {
+    "title": "Life Timer: Life Countdown",
+    "short": "See your time left until 100, ticking to the second. A calm memento mori.",
+    "full": "Life Timer shows the time you have left until age 100 in years, days, hours, minutes and seconds, ticking live on your screen.\n\nEnter your birthday once and you're done. No account, no sign-up, no questionnaire. Your birthday stays on your device.\n\nWhat you get\n• A live countdown to age 100, down to the second\n• A life-progress bar that shows how far along you are\n• A short line of motivation, with another one a tap away\n• Optional reminders three times a day (8 AM, 1 PM, 6 PM)\n• Share your countdown with friends\n\nWhy people use it\nWatching the seconds move is a quiet nudge to spend today on what matters. A calm memento mori and life clock, without the doom.\n\nPlease note\nLife Timer uses a fixed 100-year reference. It does not use life expectancy statistics, does not predict your actual lifespan or health, and does not provide medical information.\n\nThe app is free and supported by ads.",
+    "changes": "• Fixed the countdown staying frozen after reopening the app\n• Hours, minutes and seconds now tick accurately in real time\n• Cleaner settings screen\n• Improved English, Japanese and German translations\n• Shared results now include a link to the app"
+  },
+  "ja": {
+    "title": "Life Timer - 残りの人生時計",
+    "short": "誕生日を入れるだけ。100歳までの残り時間を秒単位で表示するカウントダウン",
+    "full": "Life Timerは、100歳までの残り時間を年・日・時間・分・秒で表示するカウントダウンアプリです。画面の秒がリアルタイムで進みます。\n\n誕生日を一度入れるだけ。アカウント登録もアンケートもありません。誕生日は端末内だけに保存されます。\n\n主な機能\n• 100歳までの残り時間を秒単位でリアルタイム表示\n• これまでの人生の進行率\n• 今日を大切にするひと言（タップで別の言葉）\n• 必要なときだけオンにできる1日3回の通知（8時・13時・18時）\n• 残り時間を友だちとシェア\n\nこんな使い方\n秒が減っていくのを見ると、今日をどう使うか少し考えるきっかけになります。怖くないメメント・モリ、静かな人生時計です。\n\nご注意\nLife Timerは100年という固定の基準で計算するシンプルな時間ツールです。平均寿命などの統計データは使用せず、実際の寿命や健康状態を予測したり医療情報を提供したりするものではありません。\n\nアプリは無料で、広告が表示されます。",
+    "changes": "• アプリを開き直すとカウントダウンが止まっていた問題を修正しました\n• 時・分・秒がリアルタイムで正確に進むように改善しました\n• 設定画面を整理しました\n• 英語・日本語・ドイツ語の表示を改善しました\n• シェア文にアプリのリンクを追加しました"
+  },
+  "de": {
+    "title": "Life Timer: Lebensuhr",
+    "short": "Deine verbleibende Zeit bis 100 – sekundengenau. Ein ruhiges Memento mori.",
+    "full": "Life Timer zeigt dir die verbleibende Zeit bis zu deinem 100. Geburtstag in Jahren, Tagen, Stunden, Minuten und Sekunden – live auf deinem Bildschirm.\n\nEinmal den Geburtstag eingeben, fertig. Kein Konto, keine Anmeldung, kein Fragebogen. Dein Geburtstag bleibt auf deinem Gerät.\n\nFunktionen\n• Live-Countdown bis 100, sekundengenau\n• Fortschrittsbalken für dein bisheriges Leben\n• Ein kurzer Motivationsgedanke, ein Tippen für den nächsten\n• Optionale Erinnerungen dreimal täglich (8, 13 und 18 Uhr)\n• Countdown mit Freunden teilen\n\nWarum Menschen Life Timer nutzen\nWer die Sekunden laufen sieht, überlegt bewusster, wofür er den heutigen Tag nutzt. Ein ruhiges Memento mori – ohne Schwarzmalerei.\n\nHinweis\nLife Timer rechnet mit einem festen Bezugswert von 100 Jahren. Die App nutzt keine Statistiken zur Lebenserwartung, sagt weder deine tatsächliche Lebensdauer noch deine Gesundheit voraus und bietet keine medizinischen Informationen.\n\nDie App ist kostenlos und werbefinanziert.",
+    "changes": "• Countdown bleibt nach erneutem Öffnen nicht mehr stehen\n• Stunden, Minuten und Sekunden laufen jetzt genau in Echtzeit\n• Aufgeräumter Einstellungsbildschirm\n• Verbesserte englische, japanische und deutsche Texte\n• Geteilte Ergebnisse enthalten jetzt einen Link zur App"
+  }
+}
