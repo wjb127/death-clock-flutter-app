@@ -105,7 +105,7 @@ abstract class AppLocalizations {
   /// The title of the application
   ///
   /// In en, this message translates to:
-  /// **'Life Timer Calculator'**
+  /// **'Life Timer'**
   String get appTitle;
 
   /// The subtitle of the application
@@ -153,31 +153,31 @@ abstract class AppLocalizations {
   /// Time unit: years
   ///
   /// In en, this message translates to:
-  /// **'years'**
+  /// **' years'**
   String get years;
 
   /// Time unit: days
   ///
   /// In en, this message translates to:
-  /// **'days'**
+  /// **' days'**
   String get days;
 
   /// Time unit: hours
   ///
   /// In en, this message translates to:
-  /// **'hours'**
+  /// **' hours'**
   String get hours;
 
   /// Time unit: minutes
   ///
   /// In en, this message translates to:
-  /// **'minutes'**
+  /// **' min'**
   String get minutes;
 
   /// Time unit: seconds
   ///
   /// In en, this message translates to:
-  /// **'seconds'**
+  /// **' sec'**
   String get seconds;
 
   /// Daily notifications setting
@@ -219,9 +219,9 @@ abstract class AppLocalizations {
   /// Message template for sharing
   ///
   /// In en, this message translates to:
-  /// **'⏰ Death Clock Life Check Result\n\n📅 Birthday: {birthday}\n⏳ Remaining Life: {remainingTime}\n📊 Life Progress: {progress}%\n💭 \"{quote}\"\n\nWhat\'s your remaining time? Check with Death Clock app!'**
-  String shareMessage(
-      Object birthday, Object progress, Object quote, Object remainingTime);
+  /// **'⏰ My Life Timer\n\n📅 Birthday: {birthday}\n⏳ Time left: {remainingTime}\n📊 Life progress: {progress}%\n💭 \"{quote}\"\n\nCheck your own time left 👉 {link}'**
+  String shareMessage(String birthday, String remainingTime, String progress,
+      String quote, String link);
 
   /// Motivational quote 1
   ///
@@ -300,6 +300,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'🎯 First step of time management: Check remaining life'**
   String get notificationMessage8;
+
+  /// Button to change the selected birthday
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get change;
+
+  /// Button to reveal the remaining life countdown
+  ///
+  /// In en, this message translates to:
+  /// **'Show remaining time'**
+  String get showRemainingLife;
+
+  /// Close button for dialogs
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
 }
 
 class _AppLocalizationsDelegate

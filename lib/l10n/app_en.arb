@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appTitle": "Life Timer Calculator",
+  "appTitle": "Life Timer",
   "@appTitle": {
     "description": "The title of the application"
   },
@@ -26,23 +26,23 @@
   "@lifeProgress": {
     "description": "Label for life progress percentage"
   },
-  "years": "years",
+  "years": " years",
   "@years": {
     "description": "Time unit: years"
   },
-  "days": "days",
+  "days": " days",
   "@days": {
     "description": "Time unit: days"
   },
-  "hours": "hours",
+  "hours": " hours",
   "@hours": {
     "description": "Time unit: hours"
   },
-  "minutes": "minutes",
+  "minutes": " min",
   "@minutes": {
     "description": "Time unit: minutes"
   },
-  "seconds": "seconds",
+  "seconds": " sec",
   "@seconds": {
     "description": "Time unit: seconds"
   },
@@ -70,9 +70,26 @@
   "@birthday": {
     "description": "Label for birthday"
   },
-  "shareMessage": "⏰ Death Clock Life Check Result\n\n📅 Birthday: {birthday}\n⏳ Remaining Life: {remainingTime}\n📊 Life Progress: {progress}%\n💭 \"{quote}\"\n\nWhat's your remaining time? Check with Death Clock app!",
+  "shareMessage": "⏰ My Life Timer\n\n📅 Birthday: {birthday}\n⏳ Time left: {remainingTime}\n📊 Life progress: {progress}%\n💭 \"{quote}\"\n\nCheck your own time left 👉 {link}",
   "@shareMessage": {
-    "description": "Message template for sharing"
+    "description": "Message template for sharing",
+    "placeholders": {
+      "birthday": {
+        "type": "String"
+      },
+      "remainingTime": {
+        "type": "String"
+      },
+      "progress": {
+        "type": "String"
+      },
+      "quote": {
+        "type": "String"
+      },
+      "link": {
+        "type": "String"
+      }
+    }
   },
   "quote1": "Time is life. Don't waste it.",
   "@quote1": {
@@ -125,5 +142,17 @@
   "notificationMessage8": "🎯 First step of time management: Check remaining life",
   "@notificationMessage8": {
     "description": "Notification message 8"
+  },
+  "change": "Change",
+  "showRemainingLife": "Show remaining time",
+  "close": "Close",
+  "@change": {
+    "description": "Button to change the selected birthday"
+  },
+  "@showRemainingLife": {
+    "description": "Button to reveal the remaining life countdown"
+  },
+  "@close": {
+    "description": "Close button for dialogs"
   }
-} 
+}

@@ -66,9 +66,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get birthday => '誕生日';
 
   @override
-  String shareMessage(
-      Object birthday, Object progress, Object quote, Object remainingTime) {
-    return '⏰ Death Clock 寿命チェック結果\n\n📅 誕生日: $birthday\n⏳ 残り寿命: $remainingTime\n📊 人生進行率: $progress%\n💭 \"$quote\"\n\nあなたの残り時間は？Death Clockアプリで確認してみてください！';
+  String shareMessage(String birthday, String remainingTime, String progress,
+      String quote, String link) {
+    return '⏰ Life Timer 残りの時間\n\n📅 誕生日: $birthday\n⏳ 残りの時間: $remainingTime\n📊 人生の進行率: $progress%\n💭 「$quote」\n\nあなたの残り時間もチェック 👉 $link';
   }
 
   @override
@@ -109,4 +109,13 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get notificationMessage8 => '🎯 時間管理の第一歩、残り寿命の確認';
+
+  @override
+  String get change => '変更';
+
+  @override
+  String get showRemainingLife => '残りの時間を見る';
+
+  @override
+  String get close => '閉じる';
 }

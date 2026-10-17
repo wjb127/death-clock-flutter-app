@@ -19,7 +19,7 @@
   "shareLifeStats": "수명 공유하기",
   "viewOtherQuote": "다른 명언 보기",
   "birthday": "생일",
-  "shareMessage": "⏰ Death Clock 수명 체크 결과\n\n📅 생일: {birthday}\n⏳ 남은 수명: {remainingTime}\n📊 인생 진행률: {progress}%\n💭 \"{quote}\"\n\n당신의 남은 시간은? Death Clock 앱으로 확인해보세요!",
+  "shareMessage": "⏰ Life Timer 남은 시간\n\n📅 생일: {birthday}\n⏳ 남은 시간: {remainingTime}\n📊 인생 진행률: {progress}%\n💭 \"{quote}\"\n\n내 남은 시간도 확인해보기 👉 {link}",
   "quote1": "시간은 생명이다. 낭비하지 마라.",
   "quote2": "매 순간이 소중하다. 지금 이 순간을 살아라.",
   "quote3": "시간을 아끼는 자가 인생을 얻는다.",
@@ -32,5 +32,8 @@
   "notificationMessage5": "💎 시간은 가장 귀한 자산입니다. 확인해보세요!",
   "notificationMessage6": "🚀 목표를 향해 달려가세요. 남은 시간을 확인하세요!",
   "notificationMessage7": "⭐ 오늘 하루도 소중히! 수명 체크하러 가기",
-  "notificationMessage8": "🎯 시간 관리의 첫걸음, 남은 수명 확인하기"
-} 
+  "notificationMessage8": "🎯 시간 관리의 첫걸음, 남은 수명 확인하기",
+  "change": "변경",
+  "showRemainingLife": "남은 수명 보기",
+  "close": "닫기"
+}

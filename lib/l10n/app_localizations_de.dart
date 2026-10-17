@@ -33,19 +33,19 @@ class AppLocalizationsDe extends AppLocalizations {
   String get lifeProgress => 'Lebensfortschritt';
 
   @override
-  String get years => 'Jahre';
+  String get years => ' Jahre';
 
   @override
-  String get days => 'Tage';
+  String get days => ' Tage';
 
   @override
-  String get hours => 'Stunden';
+  String get hours => ' Std.';
 
   @override
-  String get minutes => 'Minuten';
+  String get minutes => ' Min.';
 
   @override
-  String get seconds => 'Sekunden';
+  String get seconds => ' Sek.';
 
   @override
   String get dailyNotifications => 'Tägliche Benachrichtigungen';
@@ -67,9 +67,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get birthday => 'Geburtstag';
 
   @override
-  String shareMessage(
-      Object birthday, Object progress, Object quote, Object remainingTime) {
-    return '⏰ Death Clock Lebenszeit-Check Ergebnis\n\n📅 Geburtstag: $birthday\n⏳ Verbleibende Lebenszeit: $remainingTime\n📊 Lebensfortschritt: $progress%\n💭 \"$quote\"\n\nWie viel Zeit bleibt Ihnen? Überprüfen Sie es mit der Death Clock App!';
+  String shareMessage(String birthday, String remainingTime, String progress,
+      String quote, String link) {
+    return '⏰ Mein Life Timer\n\n📅 Geburtstag: $birthday\n⏳ Verbleibende Zeit: $remainingTime\n📊 Lebensfortschritt: $progress%\n💭 „$quote“\n\nPrüfe deine eigene Zeit 👉 $link';
   }
 
   @override
@@ -119,4 +119,13 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get notificationMessage8 =>
       '🎯 Erster Schritt des Zeitmanagements: Verbleibende Lebenszeit überprüfen';
+
+  @override
+  String get change => 'Ändern';
+
+  @override
+  String get showRemainingLife => 'Verbleibende Zeit anzeigen';
+
+  @override
+  String get close => 'Schließen';
 }

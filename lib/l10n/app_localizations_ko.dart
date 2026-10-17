@@ -66,9 +66,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get birthday => '생일';
 
   @override
-  String shareMessage(
-      Object birthday, Object progress, Object quote, Object remainingTime) {
-    return '⏰ Death Clock 수명 체크 결과\n\n📅 생일: $birthday\n⏳ 남은 수명: $remainingTime\n📊 인생 진행률: $progress%\n💭 \"$quote\"\n\n당신의 남은 시간은? Death Clock 앱으로 확인해보세요!';
+  String shareMessage(String birthday, String remainingTime, String progress,
+      String quote, String link) {
+    return '⏰ Life Timer 남은 시간\n\n📅 생일: $birthday\n⏳ 남은 시간: $remainingTime\n📊 인생 진행률: $progress%\n💭 \"$quote\"\n\n내 남은 시간도 확인해보기 👉 $link';
   }
 
   @override
@@ -109,4 +109,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get notificationMessage8 => '🎯 시간 관리의 첫걸음, 남은 수명 확인하기';
+
+  @override
+  String get change => '변경';
+
+  @override
+  String get showRemainingLife => '남은 수명 보기';
+
+  @override
+  String get close => '닫기';
 }

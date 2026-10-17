@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'Life Timer Calculator';
+  String get appTitle => 'Life Timer';
 
   @override
   String get appSubtitle => 'Life Timer';
@@ -33,19 +33,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lifeProgress => 'Life Progress';
 
   @override
-  String get years => 'years';
+  String get years => ' years';
 
   @override
-  String get days => 'days';
+  String get days => ' days';
 
   @override
-  String get hours => 'hours';
+  String get hours => ' hours';
 
   @override
-  String get minutes => 'minutes';
+  String get minutes => ' min';
 
   @override
-  String get seconds => 'seconds';
+  String get seconds => ' sec';
 
   @override
   String get dailyNotifications => '3 Daily Notifications (8AM, 1PM, 6PM)';
@@ -67,9 +67,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get birthday => 'Birthday';
 
   @override
-  String shareMessage(
-      Object birthday, Object progress, Object quote, Object remainingTime) {
-    return '⏰ Death Clock Life Check Result\n\n📅 Birthday: $birthday\n⏳ Remaining Life: $remainingTime\n📊 Life Progress: $progress%\n💭 \"$quote\"\n\nWhat\'s your remaining time? Check with Death Clock app!';
+  String shareMessage(String birthday, String remainingTime, String progress,
+      String quote, String link) {
+    return '⏰ My Life Timer\n\n📅 Birthday: $birthday\n⏳ Time left: $remainingTime\n📊 Life progress: $progress%\n💭 \"$quote\"\n\nCheck your own time left 👉 $link';
   }
 
   @override
@@ -115,4 +115,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get notificationMessage8 =>
       '🎯 First step of time management: Check remaining life';
+
+  @override
+  String get change => 'Change';
+
+  @override
+  String get showRemainingLife => 'Show remaining time';
+
+  @override
+  String get close => 'Close';
 }

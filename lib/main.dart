@@ -61,7 +61,8 @@ class DeathClockApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Death Clock - Life Timer',
+      title: 'Life Timer',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.red, // 빨간색 테마
         fontFamily: 'Roboto',
@@ -202,6 +203,7 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
           showLifeStats = true; // 저장된 생일이 있으면 바로 통계 표시
           _calculateRemainingLife();
         });
+        _startTimer(); // 재실행 시에도 카운트다운이 멈춰 있지 않도록 시작
         print('저장된 생일 로드됨: $savedBirthDate');
       }
     } catch (e) {
@@ -437,82 +439,12 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
                     ],
                   ),
                   
-                  const SizedBox(height: 20),
-                  
-                  // 광고 상태 표시
-                  Container(
-                    padding: const EdgeInsets.all(15),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[800],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          '📊 광고 상태',
-                          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Icon(
-                              _isBannerAdReady ? Icons.check_circle : Icons.error,
-                              color: _isBannerAdReady ? Colors.green : Colors.red,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '배너광고: ${_isBannerAdReady ? "준비됨" : "로딩중"}',
-                              style: const TextStyle(color: Colors.white70, fontSize: 14),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 5),
-                        Row(
-                          children: [
-                            Icon(
-                              _isInterstitialAdReady ? Icons.check_circle : Icons.error,
-                              color: _isInterstitialAdReady ? Colors.green : Colors.red,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '전면광고: ${_isInterstitialAdReady ? "준비됨" : "로딩중"}',
-                              style: const TextStyle(color: Colors.white70, fontSize: 14),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        const Divider(color: Colors.grey, height: 1),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.info_outline,
-                              color: Colors.blue,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                '광고가 로딩되지 않으면 네트워크 연결을 확인하세요',
-                                style: const TextStyle(color: Colors.white60, fontSize: 12),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 15),
                 ],
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('닫기', style: TextStyle(color: Colors.red)),
+                  child: Text(l10n.close, style: const TextStyle(color: Colors.red)),
                 ),
               ],
             );
@@ -527,24 +459,24 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
     try {
       if (selectedBirthDate == null) return;
       
-      final now = DateTime.now();
-      final age = now.difference(selectedBirthDate!).inDays / 365.25;
-      final lifeExpectancy = 100.0; // 100세 기준
-      
-      if (age >= lifeExpectancy) {
+      // 초 단위로 계산해야 카운트다운의 시·분·초가 실제로 움직인다.
+      // (일 단위로 자르면 매번 같은 값이 나와 초가 0 에서 멈춘다)
+      const lifeExpectancyYears = 100; // 100세 기준
+      const secondsPerYear = 365.25 * 24 * 60 * 60;
+      const totalSeconds = lifeExpectancyYears * secondsPerYear;
+      final livedSeconds = DateTime.now().difference(selectedBirthDate!).inSeconds;
+
+      if (livedSeconds >= totalSeconds) {
         setState(() {
           remainingSeconds = 0;
           lifePercentage = 100.0;
         });
         return;
       }
-      
-      final remainingYears = lifeExpectancy - age;
-      final remainingDays = remainingYears * 365.25;
-      
+
       setState(() {
-        remainingSeconds = (remainingDays * 24 * 60 * 60).round();
-        lifePercentage = (age / lifeExpectancy) * 100;
+        remainingSeconds = (totalSeconds - livedSeconds).round();
+        lifePercentage = livedSeconds / totalSeconds * 100;
       });
     } catch (e) {
       print('수명 계산 중 오류 발생: $e');
@@ -558,15 +490,16 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
       
       if (!showLifeStats || selectedBirthDate == null) return;
       
+      // 1초씩 빼지 않고 매번 현재 시각으로 다시 계산한다.
+      // 앱이 백그라운드에 있던 동안 타이머가 멈춰도 복귀 즉시 정확한 값이 된다.
       _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
         try {
-          if (remainingSeconds > 0) {
-            setState(() {
-              remainingSeconds--;
-            });
-          } else {
+          if (!mounted) {
             timer.cancel();
+            return;
           }
+          _calculateRemainingLife();
+          if (remainingSeconds <= 0) timer.cancel();
         } catch (e) {
           print('타이머 업데이트 중 오류: $e');
           timer.cancel();
@@ -680,14 +613,11 @@ class _DeathClockHomePageState extends State<DeathClockHomePage> {
     final progress = lifePercentage.toStringAsFixed(1);
     final quote = motivationalQuotes[currentQuoteIndex];
     
-    final shareText = '''${l10n.appTitle} Life Check Result
-
-📅 ${l10n.birthday}: $birthday
-⏳ ${l10n.remainingLife}: $remainingTime
-📊 ${l10n.lifeProgress}: $progress%
-💭 "$quote"
-
-What's your remaining time? Check with Death Clock app!''';
+    // 받은 사람이 바로 설치할 수 있도록 플랫폼별 스토어 링크를 붙인다.
+    final link = Theme.of(context).platform == TargetPlatform.iOS
+        ? 'https://apps.apple.com/app/id6817656161'
+        : 'https://play.google.com/store/apps/details?id=com.deathclock.lifetimerapp';
+    final shareText = l10n.shareMessage(birthday, remainingTime, progress, quote, link);
     
     // 바로 공유 실행
     Share.share(shareText);
@@ -816,7 +746,7 @@ What's your remaining time? Check with Death Clock app!''';
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                       ),
-                      child: Text(selectedBirthDate == null ? l10n.selectBirthday : '변경'),
+                      child: Text(selectedBirthDate == null ? l10n.selectBirthday : l10n.change),
                     ),
                     
                     // === 남은 수명 보기 버튼 (생일 선택 후에만 표시) ===
@@ -831,9 +761,9 @@ What's your remaining time? Check with Death Clock app!''';
                           });
                         },
                         icon: const Icon(Icons.visibility, color: Colors.white),
-                        label: const Text(
-                          '남은 수명 보기',
-                          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                        label: Text(
+                          l10n.showRemainingLife,
+                          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.orange[700],
